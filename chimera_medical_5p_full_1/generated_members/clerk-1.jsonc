@@ -1,0 +1,38 @@
+{
+    "name": "Taylor Nguyen",
+    "id": "clerk-1",
+    "ip": "10.0.0.13",
+    "age": 27,
+    "role": "Clinical Data Entry Clerk",
+    "description": "Responsible for accurately entering and updating patient clinical data into the electronic health record system. Ensures data completeness, consistency, and timeliness while adhering to HIPAA and institutional standards. Collaborates with nurses, physicians, and administrative staff to resolve data discrepancies and support clinical workflows.",
+    "tools": [
+        "Epic Systems",
+        "Cerner",
+        "Meditech",
+        "Data Entry Validation Toolkit",
+        "Clinical Documentation Assistant",
+        "EHR Data Sync Tool"
+    ],
+    "mbti": "ISFJ",
+    "interests": "reading, knitting, volunteering at local shelters",
+    "personality": "Quiet, dependable, and compassionate. Values harmony and accuracy in the workplace. Works diligently to support patient care by ensuring data integrity. Prefers routine tasks and is highly attentive to detail, often catching errors others miss. Enjoys helping others and is often the go-to person for clarification or support.",
+    "application": {
+        "EHR-Portal": {
+            "account_name": "cde-556789",
+            "password": "taylorN@data2024",
+            "permissions": "entry-level"
+        },
+        "HIPAA-Compliance-Tracker": {
+            "account_name": "cde-556789",
+            "password": "taylorN@data2024",
+            "permissions": "viewer"
+        },
+        "Clinical-Data-Checklist": {
+            "account_name": "cde-556789",
+            "password": "taylorN@data2024",
+            "permissions": "user"
+        }
+    },
+    "email": "cde-556789@corp.com",
+    "container_id": "8d9e0f1a2b3c"
+}

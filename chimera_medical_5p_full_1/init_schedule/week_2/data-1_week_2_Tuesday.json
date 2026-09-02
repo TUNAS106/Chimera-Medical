@@ -1,0 +1,34 @@
+[
+    {
+        "Time": "08:00",
+        "Activity": "Check emails and review feedback from @ehr-1 on the data dictionary. Update data cleaning script to align with field definitions."
+    },
+    {
+        "Time": "08:30",
+        "Activity": "Complete data preprocessing for all EHR fields. Run quality checks to ensure data integrity and consistency across all records."
+    },
+    {
+        "Time": "10:00",
+        "Activity": "Begin integrating the influenza case list from @influenza-1 into the cleaned dataset. Use SQL joins to merge relevant patient records."
+    },
+    {
+        "Time": "11:30",
+        "Activity": "Email @clerk-1 to confirm the accuracy of symptom entries in the EHR system, especially for fever, cough, and fatigue, which are critical for influenza analysis."
+    },
+    {
+        "Time": "12:00",
+        "Activity": "Lunch break (12:00-14:00)."
+    },
+    {
+        "Time": "14:00",
+        "Activity": "Develop a preliminary data model in a PostgreSQL database, including tables for patients, symptoms, and influenza cases. Define relationships and constraints."
+    },
+    {
+        "Time": "15:30",
+        "Activity": "Start applying statistical methods (e.g., chi-square tests) to identify associations between demographic factors and influenza symptoms."
+    },
+    {
+        "Time": "16:30",
+        "Activity": "Begin drafting the initial findings section of the report, summarizing key patterns observed in the data (e.g., higher symptom prevalence in children)."
+    }
+]

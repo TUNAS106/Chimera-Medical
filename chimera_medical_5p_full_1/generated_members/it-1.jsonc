@@ -1,0 +1,40 @@
+{
+    "name": "Casey Morgan",
+    "id": "it-1",
+    "ip": "10.0.0.14",
+    "age": 32,
+    "role": "IT Support Technician",
+    "description": "Provides technical support for hospital IT systems, including EHR platforms, network infrastructure, and end-user devices. Troubleshoots hardware and software issues, ensures system uptime, and assists clinical and administrative staff with technology-related challenges. Collaborates with the IT team to maintain cybersecurity and support system upgrades.",
+    "tools": [
+        "Windows OS",
+        "macOS",
+        "Linux",
+        "Remote Desktop Toolkit",
+        "Active Directory",
+        "Ticketing System (ServiceNow)",
+        "Network Diagnostics Suite",
+        "Endpoint Security Toolkit"
+    ],
+    "mbti": "ISTP",
+    "interests": "mechanical engineering, building PCs, watching tech repair videos",
+    "personality": "Practical, hands-on, and calm under pressure. Prefers solving problems with logic and efficiency. Often works independently and enjoys the challenge of fixing complex technical issues. Keeps a low profile but is highly respected for reliability and quick response times.",
+    "application": {
+        "ServiceNow": {
+            "account_name": "it-667890",
+            "password": "caseyM@it2024",
+            "permissions": "technician"
+        },
+        "EHR-Portal": {
+            "account_name": "it-667890",
+            "password": "caseyM@it2024",
+            "permissions": "viewer"
+        },
+        "Network-Management-Console": {
+            "account_name": "it-667890",
+            "password": "caseyM@it2024",
+            "permissions": "admin"
+        }
+    },
+    "email": "it-667890@corp.com",
+    "container_id": "9e0f1a2b3c4d"
+}

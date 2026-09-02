@@ -1,0 +1,42 @@
+[
+    {
+        "Time": "08:00",
+        "Activity": "Log in to the EHR system and check emails. Review the final checklist for data completeness."
+    },
+    {
+        "Time": "08:30",
+        "Activity": "Conduct a final review of all patient data entered from January to March. Resolve any remaining discrepancies."
+    },
+    {
+        "Time": "10:00",
+        "Activity": "Send an email to @data-1 to share the completed dataset and request a preliminary analysis of influenza trends."
+    },
+    {
+        "Time": "11:00",
+        "Activity": "Email @influenza-1 to request written confirmation that the simulated seasonal-influenza fields align with the patient-record template."
+    },
+    {
+        "Time": "12:00",
+        "Activity": "Lunch break."
+    },
+    {
+        "Time": "14:00",
+        "Activity": "Finalize the weekly report. Include a summary of data entry progress, challenges, and resolutions."
+    },
+    {
+        "Time": "15:00",
+        "Activity": "Send the weekly report to all team members (@ehr-1, @data-1, @influenza-1, @it-1) and the team lead."
+    },
+    {
+        "Time": "16:00",
+        "Activity": "Archive the completed dataset in the secure shared drive. Label it as 'Q1_EHR_Data_Complete'."
+    },
+    {
+        "Time": "16:30",
+        "Activity": "Begin planning for the next week\u2019s data entry tasks. Review upcoming goals."
+    },
+    {
+        "Time": "17:00",
+        "Activity": "Loaf around by browsing healthcare policy updates and data privacy guidelines."
+    }
+]

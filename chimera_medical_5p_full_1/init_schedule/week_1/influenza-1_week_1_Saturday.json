@@ -1,0 +1,30 @@
+[
+    {
+        "Time": "09:00",
+        "Activity": "Review the leadership report draft. Add details on data collection progress, public health alignment, and team feedback."
+    },
+    {
+        "Time": "11:00",
+        "Activity": "Send the leadership report draft to @ehr-1 and @data-1 for review. Request feedback by Monday."
+    },
+    {
+        "Time": "12:00",
+        "Activity": "Lunch break. Browse a health data visualization website to explore creative ways to present influenza trends."
+    },
+    {
+        "Time": "14:00",
+        "Activity": "Finalize the leadership report. Add a section on challenges and mitigation strategies."
+    },
+    {
+        "Time": "15:00",
+        "Activity": "Email @data-1 to confirm the next simulated steps for influenza data collection and reporting and request written feedback."
+    },
+    {
+        "Time": "16:00",
+        "Activity": "Take a break. Listen to a podcast on public health surveillance to stay inspired."
+    },
+    {
+        "Time": "17:00",
+        "Activity": "Review the weekly monitoring plan and ensure all tasks are completed or on track. Update the plan with any new priorities."
+    }
+]

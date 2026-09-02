@@ -1,0 +1,34 @@
+[
+    {
+        "Time": "09:00",
+        "Activity": "Log in to the EHR system and check emails. Review the updated data entry protocol."
+    },
+    {
+        "Time": "09:30",
+        "Activity": "Begin entering a small batch of new patient data (from April) to test the updated protocol."
+    },
+    {
+        "Time": "10:30",
+        "Activity": "Validate the new entries for accuracy and completeness."
+    },
+    {
+        "Time": "11:30",
+        "Activity": "Send an email to @ehr-1 to confirm the updated protocol is working as expected."
+    },
+    {
+        "Time": "12:00",
+        "Activity": "Lunch break."
+    },
+    {
+        "Time": "14:00",
+        "Activity": "Review the data entry process and document any improvements needed."
+    },
+    {
+        "Time": "15:00",
+        "Activity": "Loaf around by browsing healthcare technology news and EHR system updates."
+    },
+    {
+        "Time": "16:00",
+        "Activity": "Organize personal notes and files for the week. Prepare for the upcoming week."
+    }
+]

@@ -3,7 +3,6 @@
 #
 # SPDX-License-Identifier: MIT
 # ==============================================================================
-from openai import OpenAI
 import os
 import json
 
@@ -35,9 +34,12 @@ def summarize_weekly_schedule(meeting_log_dir:str, id_list, id_role_map:dict, we
                                 You will help me organize and summarize the details of goals for **the week {week_id}** for all {config.employee_number} members into a wrapped JSON file, containing the keys of \\\"week\\\", \\\"id\\\", and \\\"detailed_goals\\\".\"
                                 **Only return with the json file without any other sentences**. 
                                 The detailed {config.employee_number} ids for the employees are as follows: {id_list}
+                                The output must contain each of these IDs exactly once, must not introduce any other role or ID, and every item must have \"week\": {week_id} with a non-empty \"detailed_goals\" list.
                                 \n\n The example format for a game company can be referred to as follows: \n```json\n[\n    {{\n        \"week\": 1,\n        \"id\": \"dev-1\",\n        \"detailed_goals\": [\n            \"Set up version control and project management tools.\",\n            \"Establish project structure for assets and code.\",\n            \"Implement the main game loop and basic input handling.\",\n            \"Develop a basic character controller for movement actions.\",\n            \"Import basic character models and animations.\"\n        ]\n    }},\n    {{\n        \"week\": 1,\n        \"id\": \"des-1\",\n        \"detailed_goals\": [\n            \"Create initial concept art for characters (soldier, sniper, medic) and environments (urban, forest, industrial).\",\n            \"Define visual direction with suggested color palettes for characters and settings.\"\n        ]\n    }},\n    {{\n        \"week\": 1,\n        \"id\": \"pm-1\",\n        \"detailed_goals\": [\n            \"Complete the core mechanics outline.\",\n            \"Schedule the first project meeting to review designs and mechanics.\"\n        ]\n    }},\n    {{\n        \"week\": 2,\n        \"id\": \"dev-1\",\n        \"detailed_goals\": [\n            \"Implement shooting mechanics with aiming, reloading using raycasting.\",\n            \"Create basic enemy AI behaviors and health systems.\",\n            \"Design and implement basic UI for health, ammo count, and settings menu.\",\n            \"Integrate sound effects and background music for different game states.\"\n        ]\n    }},\n    {{\n        \"week\": 2,\n        \"id\": \"des-1\",\n        \"detailed_goals\": [\n            \"Complete detailed character models for soldier, sniper, and medic.\",\n            \"Finalize user interface designs including HUD mock-ups.\"\n        ]\n    }},\n    {{\n        \"week\": 2,\n        \"id\": \"pm-1\",\n        \"detailed_goals\": [\n            \"Finalize character and environmental designs based on feedback from Week 1.\",\n            \"Start implementing the core gameplay mechanics in an early prototype.\"\n        ]\n    }},\n    {{\n        \"week\": 3,\n        \"id\": \"dev-1\",\n        \"detailed_goals\": [\n            \"Develop systems for interacting with game objects.\",\n            \"Implement level designs using blockouts for player flow and combat areas.\",\n            \"Add environmental effects such as weather and lighting changes.\",\n            \"Start implementing multiplayer mechanics and basic networking features.\"\n        ]\n    }},\n    {{\n        \"week\": 3,\n        \"id\": \"des-1\",\n        \"detailed_goals\": [\n            \"Finalize all environmental asset models and textures.\",\n            \"Conduct integration testing with dev-1s to confirm assets fit seamlessly into the game world.\"\n        ]\n    }},\n    {{\n        \"week\": 3,\n        \"id\": \"pm-1\",\n        \"detailed_goals\": [\n            \"Assess progress and challenges, and gather team feedback.\",\n            \"Adjust project timeline and goals based on mid-project review outcomes.\"\n        ]\n    }},\n    {{\n        \"week\": 4,\n        \"id\": \"dev-1\",\n        \"detailed_goals\": [\n            \"Conduct playtesting sessions to gather feedback on gameplay mechanics.\",\n            \"Optimize performance metrics for rendering, physics, and AI.\",\n            \"Identify and fix bugs found during playtesting.\",\n            \"Prepare documentation for development progress and next phase planning.\"\n        ]\n    }},\n    {{\n        \"week\": 4,\n        \"id\": \"des-1\",\n        \"detailed_goals\": [\n            \"Finalize promotional graphics such as key art and social media content.\",\n            \"Complete the primary game trailer and any additional teaser clips.\"\n        ]\n    }},\n    {{\n        \"week\": 4,\n        \"id\": \"pm-1\",\n        \"detailed_goals\": [\n            \"Conclude presentation of the project progress to stakeholders.\",\n            \"Finish playtesting and document gameplay refinements.\"\n        ]\n    }}\n]\n```"""
         user_prompt = f"""meeting minutes: {meeting_minutes}"""
-        llm_output = run_llm(system_prompt, user_prompt)
+        llm_output = run_llm(
+            system_prompt, user_prompt, operation="weekly_meeting_summary"
+        )
         json_str = llm_output
 
         # remove the prefix "```json" and suffix "```"
@@ -46,11 +48,33 @@ def summarize_weekly_schedule(meeting_log_dir:str, id_list, id_role_map:dict, we
 
         try:
             data = json.loads(json_str)
+            if not isinstance(data, list):
+                raise ValueError("Weekly schedule must be a JSON array.")
             if len(data) != config.employee_number:
-                print("[WARN] Wrong schedule number for the employees. Retrying...")
-                continue
-            else:
-                break
+                raise ValueError(
+                    f"Weekly schedule has {len(data)} rows; expected "
+                    f"{config.employee_number}."
+                )
+            generated_ids = [item.get("id") for item in data]
+            if len(set(generated_ids)) != len(generated_ids):
+                raise ValueError("Weekly schedule contains duplicate IDs.")
+            if set(generated_ids) != set(id_list):
+                raise ValueError(
+                    f"Weekly schedule IDs {sorted(str(i) for i in generated_ids)} "
+                    f"do not match {sorted(id_list)}."
+                )
+            for item in data:
+                if item.get("week") != week_id:
+                    raise ValueError(
+                        f"Employee {item.get('id')} has week={item.get('week')}; "
+                        f"expected {week_id}."
+                    )
+                goals = item.get("detailed_goals")
+                if not isinstance(goals, list) or not goals:
+                    raise ValueError(
+                        f"Employee {item.get('id')} has empty/invalid goals."
+                    )
+            break
         except Exception as e:
             print("[WARN] Error parsing JSON:", e, "Retrying...")
             if attempt == config.max_attempt - 1:
@@ -79,6 +103,7 @@ if __name__ == "__main__":
             all_roles.add(member_profile['role']) # add roles
             id_role_map[member_profile['id']] = member_profile['role'] # add id-role map
             id_list.append(member_profile['id'])
+    id_list.sort()
     ########################
 
     week_id = 1

@@ -43,6 +43,7 @@ Chimera is a multi-agent LLM-driven simulation framework that automatically gene
 Chimera/
 ├── src/           
 │   ├── config.py                  
+│   ├── model_backend.py           # Shared CAMEL/vLLM model construction
 │   ├── foundation_model.py       
 │   ├── company_profile_automation.py
 │   ├── profile_generation.py
@@ -66,6 +67,7 @@ Chimera/
 │   ├── daily_execution.sh          # Orchestrate multi-day simulation with log capture
 │   ├── attack_auto.sh              # Automate attack-day execution
 │   └── exit_checker.sh             # Process watchdog for simulation runs
+├── chimera-kaggle-vllm-server-offline.ipynb  # Kaggle Qwen3-VL server
 └── zips/
     ├── owl.zip                     # Modified OWL multi-agent framework
     └── camel.zip                   # Modified Camel multi-agent framework
@@ -87,16 +89,80 @@ Chimera/
 
 ### 1. Launch Docker Container
 
-From the Chimera repository root:
+From the Chimera repository root, the following configuration is recommended
+for a host with **16 GB RAM and 12 vCPU**. Qwen3-VL runs remotely on Kaggle, so
+the local resources are mainly used by CAMEL/OWL agents, Docker, and log
+collection. The recommended `search_only` mode does not launch Chromium:
 
 ```bash
 sudo docker run --privileged -it \
-  --name chimera \
-  -v $(pwd):/data \
+  --name chimera2 \
+  --hostname chimera2 \
   --network host \
+  --cpus="8" \
+  --memory="8g" \
+  --memory-reservation="6g" \
+  --memory-swap="9g" \
+  --shm-size="2g" \
+  --pids-limit=4096 \
+  --ulimit nofile=65536:65536 \
+  -v "$PWD":/data/Chimera \
+  -v "$PWD/attacks":/data/attacks:ro \
+  -w /data/Chimera \
   ubuntu:22.04 \
-  /bin/bash
+  bash
 ```
+
+This layout matches the default paths in `src/config.py`: the repository is
+available at `/data/Chimera`, while attack definitions are available at
+`/data/attacks`.
+
+| Docker option | Recommended value | Purpose |
+|---------------|-------------------|---------|
+| `--cpus` | `8` | Leaves about 4 vCPU for the host OS, Docker daemon, Kaggle tunnel, sysdig, and tcpdump |
+| `--memory` | `8g` | Hard limit that leaves enough RAM for the 16 GB host and capture tools |
+| `--memory-reservation` | `6g` | Soft target for normal container memory usage |
+| `--memory-swap` | `9g` | Allows only about 1 GB of container swap, avoiding host-wide swap thrashing |
+| `--shm-size` | `2g` | Prevents Chromium/Playwright failures caused by Docker's small default `/dev/shm` |
+| `--pids-limit` | `4096` | Supports browser and multiprocessing workers without leaving process count unlimited |
+
+Monitor resource usage from another host terminal:
+
+```bash
+docker stats chimera2
+```
+
+Check whether the container was terminated because it exceeded its memory
+limit:
+
+```bash
+docker inspect chimera2 \
+  --format 'OOMKilled={{.State.OOMKilled}} ExitCode={{.State.ExitCode}}'
+```
+
+Resource tuning guidance:
+
+- Keep `CHIMERA_MAX_CONCURRENT_TASKS=2` and `CHIMERA_WEB_MODE=search_only` on a
+  16 GB host. Queued work uses no extra worker process.
+- If `OOMKilled=true`, first use `CHIMERA_MAX_CONCURRENT_TASKS=1`; do not raise
+  the container to 11–12 GB unless the host has more physical RAM.
+- If Chromium reports crashes or disconnected pages, increase `--shm-size` to
+  `3g`.
+- If the host becomes unresponsive, reduce the container to `--cpus="6"` and
+  `--memory="7g"`.
+- Do not allocate all 16 GB RAM or all 12 vCPU to the container. The host still
+  needs resources for the Kaggle tunnel and SOC capture tools.
+
+`--network host` allows a Linux container to access a Kaggle tunnel listening
+on the host at `127.0.0.1`. In that case the following endpoint can be used:
+
+```dotenv
+CHIMERA_FOUNDATION_BASE_URL=http://127.0.0.1:8000/v1
+```
+
+The `--privileged` flag should only be retained when the simulation needs broad
+system-level capabilities. Host-side sysdig/tcpdump capture alone does not
+require the container to run privileged.
 
 ### 2. Install System Dependencies
 
@@ -133,28 +199,35 @@ unzip zips/camel.zip
 
 ```bash
 cd owl/
-uv pip install -e .
+uv sync --locked --active --inexact
 cd ..
 ```
 
-**Install Camel:**
+**Install the patched Camel source without re-resolving OWL's runtime dependencies:**
 
 ```bash
 cd camel/
-uv pip install -e ".[all]"
+uv pip install --no-deps -e .
 uv pip install pre-commit mypy
 pre-commit install
 cd ..
 ```
 
+OWL and Camel have separate lockfiles. Do not sync `camel[all]` into the same
+environment: its development extras can downgrade packages required by OWL.
+
 **Install remaining dependencies:**
 
 ```bash
-uv pip install -U google-genai
 uv pip install json5 playwright
 playwright install-deps
 playwright install
+uv pip check
 ```
+
+`google-genai` is optional and is not installed for the Qwen/vLLM deployment;
+current releases can conflict with the OWL lock. Install it in a separate
+environment only when using the Google backend.
 
 > **Note:** After extracting Camel, update the log directory path in `camel/camel/societies/workforce/single_agent_worker.py` for specify the meeting log directory (can skip if set as default):
 > ```python
@@ -177,15 +250,34 @@ All simulation parameters are controlled via `src/config.py`. Key settings to ad
 | `employee_number` | Number of simulated employees | `5` |
 | `period` | Simulation duration in weeks | `2` |
 | `base_date` | Start date of the simulation | `"2025-05-02"` |
-| `foundation_corp` | LLM provider (`openai`, `google`, `deepseek`, `xai`) | `"openai"` |
-| `foundation_model` | Model name for the chosen provider | `"gpt-4o-mini"` |
+| `foundation_corp` | LLM provider (`vllm`, `openai_compatible`, `openai`, `google`, `deepseek`, `xai`) | `"vllm"` |
+| `foundation_model` | Model name for the chosen provider | `"Qwen/Qwen3-VL-30B-A3B-Instruct"` |
 | `loaf_rate` | Fraction of agents that loaf (browse aimlessly) per interval | `0.3` |
 
-Set your API key in the `.env` file at the repository root:
+Copy `.env.example` to `.env`. For the self-hosted Qwen3-VL backend, set:
 
 ```bash
-OPENAI_API_KEY=sk-...
+CHIMERA_FOUNDATION_CORP=vllm
+CHIMERA_FOUNDATION_MODEL=Qwen/Qwen3-VL-30B-A3B-Instruct
+CHIMERA_FOUNDATION_BASE_URL=http://127.0.0.1:8000/v1
+CHIMERA_FOUNDATION_API_KEY=chimera-local-change-me
+CHIMERA_EMPLOYEE_NUMBER=5
+CHIMERA_PERIOD=2
+CHIMERA_CONTAINER_NAME=chimera2
+CHIMERA_OFFLINE_MODE=false
+CHIMERA_WEB_MODE=search_only
+CHIMERA_WEB_SEARCH_MAX_ATTEMPTS=4
+CHIMERA_MAX_CONCURRENT_TASKS=2
+CHIMERA_MAX_AUX_MODEL_CALLS=1
+CHIMERA_TASK_TIMEOUT_SECONDS=900
+CHIMERA_FOUNDATION_MAX_RETRIES=0
 ```
+
+`CHIMERA_FOUNDATION_BASE_URL` must be reachable from the machine or container
+running Chimera. Kaggle's `127.0.0.1` is private to the Kaggle runtime, so use
+the URL/port created by your tunnel or Jupyter port forwarding when Chimera is
+running locally. See [QWEN3_VLLM_CHANGES.md](QWEN3_VLLM_CHANGES.md) for the full
+setup and audit-log map.
 
 ---
 
@@ -221,6 +313,11 @@ python src/meeting_for_weekly_goal_auto.py
 python src/post_meeting_summary_auto.py
 ```
 
+**Step 5 - Generate each employee's daily schedules:**
+```bash
+python src/daily_plan_generation_auto.py
+```
+
 ### Phase 2: Normal Behavior Simulation
 
 > **Warning:** Each simulated workday may consume a significant number of LLM tokens. Monitor your API usage carefully.
@@ -231,10 +328,83 @@ python src/daily_execution_auto.py --date <DAY> --week <WEEK_NUMBER>
 python src/daily_execution_auto.py --date Friday --week 1
 ```
 
-To automate multi-day execution with concurrent log collection:
+To run the complete configured period (two weeks by default), all seven days,
+with concurrent log collection, execute this command on the Docker host:
 
 ```bash
-bash scripts/daily_execution.sh
+sudo bash scripts/daily_execution.sh
+```
+
+The runner targets `chimera2` by default. `CHIMERA_WEEKS` and `CHIMERA_DATES`
+can restrict a run without editing the script; for example,
+`CHIMERA_WEEKS="1" CHIMERA_DATES="Monday Tuesday"`.
+The command must run on the Docker host because Sysdig observes the host kernel
+and tcpdump enters the container network namespace. On kernel 7.0, configure
+the patched modern-BPF executable with `CHIMERA_SYSDIG_BIN` (the runner also
+detects `~/.local/bin/sysdig-chimera` for the user who invoked `sudo`). It waits
+until both capture files are ready and validates them after every simulated day.
+Before starting either capture, it verifies `/models`, performs a tiny chat
+completion, and checks the selected web mode. An expired Kaggle proxy therefore
+stops the command immediately without producing a false or partial day.
+
+`CHIMERA_WEB_MODE=search_only` is the normal mode: workers can search and fetch
+bounded public text, CAPTCHA pages are reported as blocked, and no Chromium
+tree is started. Use `llm_only` for model knowledge only. Use `browser` only
+for tasks that explicitly require visual page interaction; browser instances
+are lazy, closed after every task, and still subject to the worker timeout.
+If bounded Bing HTML attempts return no relevant result, search falls back to
+the text-only MediaWiki API instead of failing the whole preflight immediately.
+The capture runner also records capture-process exit markers: a Sysdig or
+tcpdump process that exits before the simulation finishes makes the day fail,
+and capture files are read only after both writers have stopped.
+
+To run all construction steps followed by the complete normal simulation from
+the Docker host:
+
+```bash
+sudo bash scripts/full_execution.sh
+```
+
+Use a new `CHIMERA_SCENARIO_NAME` for a new five-person company. The company
+profile generator intentionally does not overwrite an existing scenario.
+The full runner checks dependencies, the five-person configuration, API
+readiness, and the configured model before it creates any scenario data.
+
+For the recommended staged workflow, prepare the five-person company and all
+daily schedules without starting behavioral execution or SCAP/PCAP capture:
+
+```bash
+sudo bash scripts/prepare_company.sh
+```
+
+The preparation runner is resumable: it validates and skips company, profile,
+meeting, weekly-schedule, and daily-schedule phases that are already complete.
+The meeting phase creates exactly one task for every employee/week pair (for
+example, five employees over two weeks produces ten rows) and replaces an
+incomplete meeting CSV on retry. It also rejects duplicate, missing, or
+wrongly-assigned employee/week rows before generating schedules.
+It never starts employee behavior or SCAP/PCAP capture. Inspect progress without
+calling the model using:
+
+```bash
+sudo bash scripts/prepare_company.sh --status-only
+```
+
+When already inside `chimera2`, use the container-native entrypoint instead:
+
+```bash
+cd /data/Chimera
+bash scripts/prepare_company_in_container.sh
+
+# Validation only; does not call the model:
+bash scripts/prepare_company_in_container.sh --status-only
+```
+
+Review the generated company, profiles, meeting output, and schedules. Start
+behavioral execution and capture later with:
+
+```bash
+sudo bash scripts/daily_execution.sh
 ```
 
 ### Phase 3: Attack Simulation
@@ -260,8 +430,12 @@ python src/daily_execution_auto_attack.py --attacker clia-1 --attid gen_attack_1
 To automate the full attack run:
 
 ```bash
-bash scripts/attack_auto.sh
+CHIMERA_ATTACKER_ID=<GENERATED_EMPLOYEE_ID> sudo -E bash scripts/attack_auto.sh
 ```
+
+The attack runner targets `chimera2`, calls `attack_schedule.py` before the
+attack execution, and requires an ID from the current scenario's
+`generated_members` directory.
 
 ---
 
@@ -271,20 +445,36 @@ Sysdig (`.scap`) and tcpdump (`.pcap`) capture is integrated into `scripts/daily
 
 **Network capture (pcap):**
 ```bash
-CONTAINER_PID=$(docker inspect -f '{{.State.Pid}}' chimera)
+CONTAINER_PID=$(docker inspect -f '{{.State.Pid}}' chimera2)
 nsenter -t $CONTAINER_PID -n tcpdump -i any -w /data/Logs/<filename>.pcap
 ```
 
 **System call capture (scap):**
 ```bash
-CONTAINER_ID=$(docker ps -a | grep chimera | awk '{print $1}')
-sudo sysdig -v -b \
-  -p "%evt.rawtime %user.uid %proc.pid %proc.name %syscall.type %evt.dir" \
+CONTAINER_ID=$(docker inspect -f '{{.Id}}' chimera2 | cut -c1-12)
+sudo env SYSDIG_PLUGIN_DIR=/usr/share/sysdig/plugins \
+  /home/tunas/.local/bin/sysdig-chimera --modern-bpf \
   -w /data/Logs/<filename>.scap \
   container.id=$CONTAINER_ID
 ```
 
+The kernel-7 compatibility build records all enabled Sysdig events except
+`sendmmsg` and `recvmmsg`, whose exit programs still exceed this kernel's eBPF
+verifier complexity limit. Their network traffic remains present in the PCAP.
+
 Post-processing extracts structured features (logon events, file operations, HTTP traffic, emails) from raw logs to match with CERT dataset format.
+
+The Qwen/vLLM integration also writes append-only runtime audit data:
+
+| File | Contents |
+|------|----------|
+| `<scenario>/model_logs/model_calls.jsonl` | Direct generation request, timing, token usage, response/error |
+| `<execution_logs>/task_transcripts.jsonl` | Complete multi-agent rounds and structured tool calls |
+| `<execution_logs>/run_metadata.jsonl` | Model, endpoint and workflow metadata for each run |
+| `<execution_logs>/<member>_..._task_<index>.log` | Detailed CAMEL/OWL and tool execution trace |
+
+Prompts and responses are included by default. Set
+`CHIMERA_LOG_MODEL_CONTENT=false` to retain metadata only.
 
 ---
 
@@ -324,11 +514,15 @@ Configure the backend in `src/config.py`:
 
 | Provider | `foundation_corp` | Example `foundation_model` |
 |----------|-------------------|----------------------------|
+| Self-hosted vLLM | `"vllm"` | `"Qwen/Qwen3-VL-30B-A3B-Instruct"` |
+| Other OpenAI-compatible endpoint | `"openai_compatible"` | Server-defined model name |
 | OpenAI | `"openai"` | `"gpt-4o-mini"`, `"gpt-4o"` |
 | Google | `"google"` | `"gemini-2.0-flash"` |
 | DeepSeek | `"deepseek"` | `"deepseek-chat"` |
 
-Set the corresponding API key in `.env` (OpenAI reads from the standard `OPENAI_API_KEY` variable; other providers require `api_key` to be set directly in `config.py`).
+Set the corresponding variables in `.env`; `.env.example` documents all
+self-hosted parameters. Qwen3-VL is used by both direct generation and all
+CAMEL/OWL agents, including BrowserToolkit screenshot analysis and tool calls.
 
 ---
 

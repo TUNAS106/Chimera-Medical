@@ -1,0 +1,34 @@
+[
+    {
+        "Time": "08:00",
+        "Activity": "Send the follow-up email to local public health authorities. Include the surveillance report template and a request for feedback."
+    },
+    {
+        "Time": "09:00",
+        "Activity": "Email @data-1 to request a written review of the first week's simulated analysis, unexpected trends, and data-quality issues."
+    },
+    {
+        "Time": "10:30",
+        "Activity": "Begin drafting a summary of the first week\u2019s influenza surveillance findings for internal distribution."
+    },
+    {
+        "Time": "12:00",
+        "Activity": "Lunch break \u2013 take a walk and reflect on the week\u2019s progress."
+    },
+    {
+        "Time": "14:00",
+        "Activity": "Finalize the summary report. Include key findings, data sources, and recommendations for improvement."
+    },
+    {
+        "Time": "15:00",
+        "Activity": "Email the verified summary report to @data-1 and @clerk-1 for written review and feedback."
+    },
+    {
+        "Time": "16:00",
+        "Activity": "Review the surveillance report template and update it with any new insights from the week\u2019s analysis."
+    },
+    {
+        "Time": "17:00",
+        "Activity": "Plan for next week\u2019s activities: focus on data validation, refining analysis methods, and preparing for the next public health communication."
+    }
+]

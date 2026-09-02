@@ -1,0 +1,38 @@
+[
+    {
+        "Time": "08:00",
+        "Activity": "Review the EHR data collection protocol and ensure all sections are complete and consistent."
+    },
+    {
+        "Time": "09:00",
+        "Activity": "Check the EHR system\u2019s access logs one final time to confirm that all security measures are active."
+    },
+    {
+        "Time": "10:00",
+        "Activity": "Begin drafting a plan for the next phase of EHR data collection, including seasonal influenza trend analysis."
+    },
+    {
+        "Time": "11:00",
+        "Activity": "Email @influenza-1 to request written influenza data-collection requirements for next week's plan."
+    },
+    {
+        "Time": "12:00",
+        "Activity": "Lunch break (12:00-14:00)."
+    },
+    {
+        "Time": "14:00",
+        "Activity": "Review the training materials for the EHR data validation session and make any final edits."
+    },
+    {
+        "Time": "15:00",
+        "Activity": "Organize all EHR-related documents into a shared folder for easy access by the team."
+    },
+    {
+        "Time": "16:00",
+        "Activity": "Take a break and browse the hospital\u2019s internal bulletin board for updates on upcoming events."
+    },
+    {
+        "Time": "17:00",
+        "Activity": "Reflect on the week\u2019s accomplishments and prepare a brief summary for the team meeting on Monday."
+    }
+]

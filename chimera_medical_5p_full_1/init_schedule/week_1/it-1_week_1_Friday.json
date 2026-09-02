@@ -1,0 +1,34 @@
+[
+    {
+        "Time": "08:00",
+        "Activity": "Conduct a final system health check across all servers, including EHR, data analysis, and backup systems."
+    },
+    {
+        "Time": "08:30",
+        "Activity": "Verify that all user access permissions are correctly configured and that no team member has unauthorized access."
+    },
+    {
+        "Time": "10:00",
+        "Activity": "Email @clerk-1 to confirm that all data entry staff can access the EHR system without issues and that no connectivity problems remain."
+    },
+    {
+        "Time": "11:00",
+        "Activity": "Perform a full backup of the EHR database and verify the backup file integrity."
+    },
+    {
+        "Time": "13:00",
+        "Activity": "Lunch break (12:00-14:00) \u2013 play a short game on my phone to relax."
+    },
+    {
+        "Time": "14:00",
+        "Activity": "Compile a comprehensive report on the week\u2019s IT support activities, including system health, access setup, software installations, and data pipeline status."
+    },
+    {
+        "Time": "16:00",
+        "Activity": "Email @ehr-1, @data-1, @influenza-1, and @clerk-1 with the verified simulated IT report and request written feedback on remaining concerns."
+    },
+    {
+        "Time": "17:30",
+        "Activity": "Clean up my workstation, close all open software, and log out of the network. Begin preparing for the next week\u2019s tasks."
+    }
+]

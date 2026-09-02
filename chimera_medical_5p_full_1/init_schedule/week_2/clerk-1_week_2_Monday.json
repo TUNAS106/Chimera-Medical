@@ -1,0 +1,38 @@
+[
+    {
+        "Time": "08:00",
+        "Activity": "Log in to the EHR system and check emails for any updates or messages from the EHR Specialist or Influenza Surveillance Coordinator. Begin reviewing the first batch of collected EHRs from the previous week."
+    },
+    {
+        "Time": "08:30",
+        "Activity": "Start data entry for 20 EHRs, ensuring all fields (patient demographics, diagnosis codes, vital signs, and treatment details) are accurately inputted into the system."
+    },
+    {
+        "Time": "10:00",
+        "Activity": "Validate the first 10 entries for completeness and accuracy, cross-referencing with source documents. Flag any missing or inconsistent data for follow-up."
+    },
+    {
+        "Time": "11:00",
+        "Activity": "Send an email to @ehr-1 to request clarification on 3 records with ambiguous diagnosis codes. Include the patient IDs and specific discrepancies."
+    },
+    {
+        "Time": "12:00",
+        "Activity": "Lunch break (12:00-14:00)."
+    },
+    {
+        "Time": "14:00",
+        "Activity": "Resume data entry for the next 20 EHRs, focusing on patients with chronic conditions to ensure high accuracy."
+    },
+    {
+        "Time": "15:30",
+        "Activity": "Review and validate the 20 entries completed after lunch. Use the hospital\u2019s data validation checklist to confirm HIPAA compliance."
+    },
+    {
+        "Time": "16:30",
+        "Activity": "Begin drafting the weekly progress report, noting that 40% of the EHRs have been entered and validated."
+    },
+    {
+        "Time": "17:30",
+        "Activity": "Send a brief update email to @influenza-1 and @data-1, informing them of the current progress and any data quality concerns."
+    }
+]

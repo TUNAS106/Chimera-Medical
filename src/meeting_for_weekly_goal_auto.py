@@ -5,26 +5,30 @@
 # ==============================================================================
 from camel.agents.chat_agent import ChatAgent
 from camel.messages.base import BaseMessage
-from camel.models import ModelFactory
 from camel.societies.workforce import Workforce
 from camel.tasks.task import Task
 from camel.toolkits import (
     FunctionTool,
     SearchToolkit,
 )
-from camel.types import ModelPlatformType, ModelType
 import logging
 import os
+from datetime import datetime, timezone
 from camel.logger import set_log_level
 
 import config
 import json
+from model_backend import (
+    create_camel_model,
+    model_runtime_description,
+    write_run_metadata,
+)
 
 
 from dotenv import load_dotenv
 
 env_path = config.env_path
-load_dotenv()
+load_dotenv(env_path)
 
 set_log_level(level="DEBUG")
 
@@ -43,11 +47,14 @@ def process_task_logging(workforce: Workforce, task: Task, log_dir: str) -> Task
     """
     # Ensure the log directory exists
     os.makedirs(log_dir, exist_ok=True)
+    # The patched CAMEL worker uses this path for meeting_response.csv. Keep
+    # worker output inside the active scenario instead of the legacy demo path.
+    os.environ["CAMEL_WORKFORCE_MEETING_LOG_DIR"] = log_dir
     log_file_path = os.path.join(log_dir, "meeting_detailed_actions.log")
 
     # Configure a FileHandler for the logger
     file_handler = logging.FileHandler(log_file_path, mode="w")
-    file_handler.setLevel(logging.INFO)
+    file_handler.setLevel(logging.DEBUG)
     file_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
     file_handler.setFormatter(file_formatter)
 
@@ -56,11 +63,24 @@ def process_task_logging(workforce: Workforce, task: Task, log_dir: str) -> Task
     logger.addHandler(file_handler)
 
     try:
+        logger.info("MEETING_START %s task=%r", model_runtime_description(), task.content)
         # Run the process_task method
         result_task = workforce.process_task(task)
+        logger.info("MEETING_COMPLETE result=%r", result_task.result)
+    except Exception as exc:
+        logger.exception("MEETING_FAILED")
+        write_run_metadata(
+            log_dir,
+            "weekly_meeting",
+            event="failed",
+            error_type=type(exc).__name__,
+            error=str(exc),
+        )
+        raise
     finally:
         # Remove the FileHandler after execution to avoid duplicate logs
         logger.removeHandler(file_handler)
+        file_handler.close()
 
     return result_task
 
@@ -68,25 +88,9 @@ def process_task_logging(workforce: Workforce, task: Task, log_dir: str) -> Task
 def load_member_profile(
     member_profile_path: str,
     search_tools: list,
-    model_type_selection,
-    model_platform_selection,
 ):
     with open(member_profile_path, "r") as f:
         member_profile = json.load(f)
-
-    ### For camel
-    # foundation_corp_map = {
-    #         "openai": ModelType.GPT_4O_MINI,
-    #         "google": ModelType.GEMINI_2_0_FLASH,
-    #         "deepseek": ModelType.DEEPSEEK_CHAT,
-    #     }
-    # foundation_model_platorm_map = {
-    #         "openai": ModelPlatformType.OPENAI,
-    #         "google": ModelPlatformType.GEMINI,
-    #         "deepseek": ModelPlatformType.DEEPSEEK,
-    #     }
-    # model_type_selection = foundation_corp_map.get(config.foundation_corp, ModelType.GPT_4O_MINI)
-    # model_platform_selection = foundation_model_platorm_map.get(config.foundation_corp, ModelPlatformType.DEFAULT)
 
     member_agent = ChatAgent(
         BaseMessage.make_assistant_message(
@@ -95,47 +99,23 @@ def load_member_profile(
             As a {member_profile['role']}, you are assigned to {member_profile['description']}.
             Your personality is {member_profile['personality']}.""",
         ),
-        model=ModelFactory.create(
-            model_platform=model_platform_selection,
-            model_type=model_type_selection,
-        ),
+        model=create_camel_model(temperature=0),
         tools=[*search_tools],
     )
     return member_profile, member_agent
 
 
 def WeeklyPlan(member_dir: str):
-    search_toolkit = SearchToolkit()
-    search_tools = [
-        FunctionTool(search_toolkit.search_google),
-        FunctionTool(search_toolkit.search_duckduckgo),
-    ]
-
-    ### For camel
-    foundation_corp_map = {
-        "openai": ModelType.GPT_4O_MINI,
-        "google": ModelType.GEMINI_2_0_FLASH,
-        "deepseek": ModelType.DEEPSEEK_CHAT,
-        # "xai": ModelType.GROK_3_MINI,
-    }
-    foundation_model_platorm_map = {
-        "openai": ModelPlatformType.OPENAI,
-        "google": ModelPlatformType.GEMINI,
-        "deepseek": ModelPlatformType.DEEPSEEK,
-        # "xai": ModelPlatformType.OPENAI_COMPATIBLE_MODEL,
-    }
-    model_type_selection = foundation_corp_map.get(
-        config.foundation_corp, ModelType.GPT_4O_MINI
-    )
-    model_platform_selection = foundation_model_platorm_map.get(
-        config.foundation_corp, ModelPlatformType.DEFAULT
-    )
+    search_tools = []
+    if config.meeting_enable_search and not config.offline_mode:
+        search_toolkit = SearchToolkit()
+        search_tools = [
+            FunctionTool(search_toolkit.search_google),
+            FunctionTool(search_toolkit.search_duckduckgo),
+        ]
 
     agent_kwargs = {
-        "model": ModelFactory.create(
-            model_platform=model_platform_selection,
-            model_type=model_type_selection,
-        ),
+        "model": create_camel_model(temperature=0),
     }
 
     workforce = Workforce(
@@ -147,22 +127,26 @@ def WeeklyPlan(member_dir: str):
 
     all_roles = set()
     id_role_map = {}
+    members = []
+    workforce_node_ids = {}
 
-    for file in os.listdir(member_dir):
+    for file in sorted(os.listdir(member_dir)):
         if file.endswith(".jsonc"):
             member_profile_path = os.path.join(member_dir, file)
             member_profile, member_agent = load_member_profile(
                 member_profile_path,
                 search_tools,
-                model_type_selection,
-                model_platform_selection,
             )
             all_roles.add(member_profile["role"])  # add roles
             id_role_map[member_profile["id"]] = member_profile[
                 "role"
             ]  # add id-role map
+            members.append(member_profile)
             member_description = f"{member_profile['role']}-{member_profile['name']}"
             workforce.add_single_agent_worker(member_description, worker=member_agent)
+            workforce_node_ids[member_profile["id"]] = workforce._children[
+                -1
+            ].node_id
 
     # specify the task to be solved
     human_task = Task(
@@ -179,13 +163,64 @@ def WeeklyPlan(member_dir: str):
         id="0",
     )
 
+    # One deterministic work item per employee/week. Model-driven Workforce
+    # decomposition is useful for open-ended work, but it does not guarantee
+    # the exact employee_number * period rows required by schedule generation.
+    task_index = 0
+    for member in members:
+        for week in range(1, config.period + 1):
+            assignment = {
+                "employee_id": member["id"],
+                "employee_name": member["name"],
+                "employee_role": member["role"],
+                "week": week,
+                "workforce_assignee_id": workforce_node_ids[member["id"]],
+            }
+            subtask = Task(
+                content=f"""Define the detailed goals for Week {week} only for
+employee {member['id']} ({member['role']} - {member['name']}). The goals must
+directly support this company objective: {config.goal}. Provide concrete,
+measurable activities and deliverables that fit this employee's role. Coordinate
+with relevant goals from earlier meeting contributions when available. Do not
+create goals for another employee or another week, and do not delegate this task.""",
+                id=f"0.{task_index}",
+                additional_info=json.dumps(assignment, ensure_ascii=False),
+            )
+            human_task.add_subtask(subtask)
+            task_index += 1
+
+    expected_task_count = config.employee_number * config.period
+    if len(human_task.subtasks) != expected_task_count:
+        raise ValueError(
+            f"Prepared {len(human_task.subtasks)} meeting tasks; expected "
+            f"{expected_task_count}."
+        )
+
     log_dir = config.meeting_log_dir
+    os.makedirs(log_dir, exist_ok=True)
+    # A retry must replace an incomplete meeting instead of appending to it.
+    for filename in ("meeting_response.csv", "meeting_result.log"):
+        output_path = os.path.join(log_dir, filename)
+        if os.path.exists(output_path):
+            os.remove(output_path)
+    write_run_metadata(
+        log_dir,
+        "weekly_meeting",
+        event="started",
+        member_count=len(id_role_map),
+        task_count=len(human_task.subtasks),
+    )
     task_discuss = process_task_logging(workforce, human_task, log_dir)
+    write_run_metadata(
+        log_dir, "weekly_meeting", event="completed", member_count=len(id_role_map)
+    )
 
     print("Final Result of Original task:\n", task_discuss.result)
     # save task_discuss.result to a file
     with open(os.path.join(log_dir, "meeting_result.log"), "w") as f:
+        f.write(f"=== Meeting run {datetime.now(timezone.utc).isoformat()} ===\n")
         f.write(task_discuss.result)
+        f.write("\n")
 
     # move /data/meeting_logs/* to log_dir if the path exists
     meeting_logs_src = "/data/meeting_logs"

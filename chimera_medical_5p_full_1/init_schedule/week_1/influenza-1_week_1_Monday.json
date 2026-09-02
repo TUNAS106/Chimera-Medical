@@ -1,0 +1,34 @@
+[
+    {
+        "Time": "08:00",
+        "Activity": "Log in to the hospital's internal system and check emails. Review the week\u2019s goals and prioritize tasks. Begin drafting a list of key influenza surveillance metrics (e.g., case counts, age groups, geographic distribution, severity indicators) based on CDC guidelines and local health priorities."
+    },
+    {
+        "Time": "09:00",
+        "Activity": "Email @data-1 to request a written list of relevant simulated EHR fields for influenza analysis and any available schema documentation."
+    },
+    {
+        "Time": "10:00",
+        "Activity": "Review the available simulated EHR-field guidance and create a preliminary extraction list covering diagnosis codes, symptoms, lab results, vaccination status, and demographic data."
+    },
+    {
+        "Time": "12:00",
+        "Activity": "Lunch break. Browse public health news websites (e.g., CDC, WHO) to stay updated on current influenza trends and surveillance best practices."
+    },
+    {
+        "Time": "14:00",
+        "Activity": "Draft a data request template for the Clinical Data Entry Clerk. Include fields such as patient ID, date of visit, symptoms, diagnosis, age, gender, zip code, and vaccination history. Share the draft with @clerk-1 for feedback."
+    },
+    {
+        "Time": "15:00",
+        "Activity": "Email @ehr-1 to request the internal reporting contact details and confirm which simulated EHR fields support regional influenza reporting standards."
+    },
+    {
+        "Time": "16:00",
+        "Activity": "Begin drafting a weekly monitoring plan. Outline key milestones: EHR data field confirmation, template finalization, data collection pilot, and reporting alignment. Assign responsibilities and timelines."
+    },
+    {
+        "Time": "17:30",
+        "Activity": "Review and finalize the weekly monitoring plan. Share it with @ehr-1, @clerk-1, and @it-1 for input. Schedule a team check-in for Tuesday morning."
+    }
+]

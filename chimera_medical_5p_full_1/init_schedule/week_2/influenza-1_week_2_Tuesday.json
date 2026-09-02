@@ -1,0 +1,34 @@
+[
+    {
+        "Time": "08:00",
+        "Activity": "Check emails and respond to any updates from @data-1 and @ehr-1. Review the surveillance report template draft and make revisions based on feedback."
+    },
+    {
+        "Time": "09:00",
+        "Activity": "Email @it-1 to request a written simulated extraction plan covering security controls and data-export formats."
+    },
+    {
+        "Time": "10:00",
+        "Activity": "Begin testing the surveillance report template using the sample data provided by @ehr-1. Identify gaps in data fields or formatting."
+    },
+    {
+        "Time": "12:00",
+        "Activity": "Lunch break \u2013 browse public health news websites to stay updated on regional influenza trends."
+    },
+    {
+        "Time": "14:00",
+        "Activity": "Finalize the surveillance report template. Add sections for public health recommendations and a summary of data quality."
+    },
+    {
+        "Time": "15:00",
+        "Activity": "Send the finalized report template to @data-1 and @clerk-1 for review. Request feedback by end of day."
+    },
+    {
+        "Time": "16:00",
+        "Activity": "Email @ehr-1 to confirm the simulated weekly reporting schedule and request written input on integrating the template into the EHR workflow."
+    },
+    {
+        "Time": "17:00",
+        "Activity": "Review the initial influenza case data again, focusing on age-specific trends. Begin preparing a brief summary for the public health communication."
+    }
+]

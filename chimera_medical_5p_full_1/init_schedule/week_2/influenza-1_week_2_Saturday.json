@@ -1,0 +1,30 @@
+[
+    {
+        "Time": "09:00",
+        "Activity": "Review the surveillance report template and make final adjustments. Ensure it is user-friendly and comprehensive."
+    },
+    {
+        "Time": "10:30",
+        "Activity": "Browse public health databases and CDC reports to compare our findings with regional trends."
+    },
+    {
+        "Time": "12:00",
+        "Activity": "Lunch break \u2013 cook a meal and relax."
+    },
+    {
+        "Time": "14:00",
+        "Activity": "Draft a short blog post for the hospital\u2019s internal newsletter summarizing the week\u2019s influenza surveillance progress."
+    },
+    {
+        "Time": "15:30",
+        "Activity": "Email the verified influenza-awareness draft to @data-1 for factual review."
+    },
+    {
+        "Time": "16:30",
+        "Activity": "Review the EHR data entry process with @clerk-1 to identify any training needs for staff."
+    },
+    {
+        "Time": "17:30",
+        "Activity": "Take a walk and listen to a podcast on community health initiatives."
+    }
+]

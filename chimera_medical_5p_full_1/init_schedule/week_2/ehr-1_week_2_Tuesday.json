@@ -1,0 +1,38 @@
+[
+    {
+        "Time": "08:00",
+        "Activity": "Finalize the EHR data collection protocol document and share it with @clerk-1, @data-1, and @influenza-1 for review."
+    },
+    {
+        "Time": "09:00",
+        "Activity": "Email @clerk-1 with the finalized simulated protocol and request written usability feedback."
+    },
+    {
+        "Time": "10:00",
+        "Activity": "Revise the protocol based on feedback and prepare a version for approval by the department head."
+    },
+    {
+        "Time": "11:00",
+        "Activity": "Begin drafting a training presentation for the Clinical Data Entry Clerk on EHR data validation best practices."
+    },
+    {
+        "Time": "12:00",
+        "Activity": "Lunch break (12:00-14:00)."
+    },
+    {
+        "Time": "14:00",
+        "Activity": "Email @it-1 to request a written system-audit status and access-control findings."
+    },
+    {
+        "Time": "15:00",
+        "Activity": "Review the EHR system\u2019s access logs and identify any unauthorized access attempts or misconfigurations."
+    },
+    {
+        "Time": "16:00",
+        "Activity": "Document all identified security issues and prepare a report for @it-1."
+    },
+    {
+        "Time": "17:00",
+        "Activity": "Begin drafting a list of recommended access control improvements for the EHR system."
+    }
+]

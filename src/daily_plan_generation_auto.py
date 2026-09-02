@@ -11,6 +11,7 @@ import os
 
 from tqdm import tqdm
 from foundation_model import run_llm
+from workday_policy import activity_validation_errors, parse_clock_time
 
 env_path = config.env_path
 load_dotenv()
@@ -46,13 +47,15 @@ def export_weekly_schedule_to_daily(
             profile_detail = member_profile
             break
 
+    previous_error = ""
     for attempt in range(config.max_attempt):
         # generate the daily plan
-        output = generate_daily_plan_with_gpt(
+        output = generate_daily_plan_with_llm(
             week_id=week_id,
             profile_detail=profile_detail,
             id_role_map=id_role_map,
             weekly_goal=weekly_goal,
+            previous_error=previous_error,
         )
 
         if "```json" in output:
@@ -61,9 +64,42 @@ def export_weekly_schedule_to_daily(
         # check if the output is valid JSON
         try:
             daily_week_schedule = json.loads(output)
+            if not isinstance(daily_week_schedule, dict):
+                raise ValueError("Daily schedule must be a JSON object.")
+            missing_days = [day for day in days if day not in daily_week_schedule]
+            if missing_days:
+                raise ValueError(f"Missing days: {missing_days}")
+            for day in days:
+                tasks = daily_week_schedule[day]
+                if not isinstance(tasks, list) or not tasks:
+                    raise ValueError(f"{day} must contain at least one task.")
+                for task in tasks:
+                    if not isinstance(task, dict):
+                        raise ValueError(f"{day} contains a non-object task.")
+                    if not task.get("Time") or not task.get("Activity"):
+                        raise ValueError(
+                            f"{day} task is missing Time or Activity: {task}"
+                        )
+                    task_time = parse_clock_time(task["Time"])
+                    if not (
+                        parse_clock_time(config.workday_start)
+                        <= task_time
+                        < parse_clock_time(config.workday_end)
+                    ):
+                        raise ValueError(
+                            f"{day} task is outside working hours: {task}"
+                        )
+                    activity_errors = activity_validation_errors(
+                        task["Activity"], employee_id, id_role_map
+                    )
+                    if activity_errors:
+                        raise ValueError(
+                            f"{day} task {'; '.join(activity_errors)}: {task}"
+                        )
             break
         except Exception as e:
             print("[WARN] Error parsing JSON:", e, "Retrying...")
+            previous_error = str(e)
             if attempt == config.max_attempt - 1:
                 print("[Error] Max attempts reached. Exiting.")
                 print(f"### Errored JSON ### : {output}")
@@ -81,23 +117,40 @@ def export_weekly_schedule_to_daily(
                 json.dump(daily_week_schedule[day], fd, indent=4)
 
 
-def generate_daily_plan_with_gpt(
-    week_id: int, profile_detail: dict, id_role_map, weekly_goal: str
+def generate_daily_plan_with_llm(
+    week_id: int,
+    profile_detail: dict,
+    id_role_map,
+    weekly_goal: str,
+    previous_error: str = "",
 ):
     system_prompt = f"""Your name is {profile_detail['name']}. Your personality is {profile_detail['mbti']}, and your age is {profile_detail['age']}.
                 You are a {profile_detail['role']} in a {config.company_type}.
                 The goal of your company is {config.goal}. \n\n
                 I will provide you with your goal plan for this week after you meet with all the members in the company, and you should divide these tasks into a **very detailed** schedule for your daily work. \n\n
                 There are {config.employee_number} members in your company, and the detailed role distribution can be found as follows: {id_role_map}. \n\n
-                You can contact your colleagues if you require external support or data/information from them, or have anything to discuss. Since all contact will be managed through email communication, such activity just needs to specify the people to include in the email with @PEOPLE and then specify the topic.\n\n
-                The regular working hours for your company are 08:00 - 18:00 (with lunch time from 12:00-14:00), while you should arrange your work based on your personal preferences and personalities. **You should act based on your characteristics and your own personal preferences to handle your work**.\n\n
+                You can contact colleagues only by email. Use one or more exact colleague IDs from {list(id_role_map)} after @, never @PEOPLE, never your own ID @{profile_detail['id']}, and never an unknown role or name. Do not schedule meetings. Keep artifact-producing work and email hand-off as separate entries: first create and verify a report, then in a later entry email an exact colleague ID with its verified findings.\n\n
+                Working hours are a hard boundary from {config.workday_start} through {config.workday_end}: every activity must be at or after {config.workday_start} and strictly before {config.workday_end}. Lunch is 12:00-14:00; only a break or idle activity may be scheduled then. **You should act based on your characteristics and your own personal preferences to handle your work**.\n\n
                 When you are not into working, you can loaf around by browsing websites you are interested in, or doing nothing with yourself. \n\n
                 **You should organize your activity timetable into a JSON format for the whole week with the necessary keys including \\\"Time\\\" and \\\"Activity\\\"**\n\n
-                The example format for a game company can be found as follows: \n{{\n    \"Monday\": [{{\n      \"Time\": \"08:00\",\n      \"Activity\": \"Log in to the OA system, check emails. Install the required dependencies for game development (including git, vim), and implement the code for the login page of the game (e.g., login navigation for users, banner figure, documentation). \"\n    }},\n    {{\n      \"Time\": \"09:00\",\n      \"Activity\": \"Meet with @Designer to align on requirements and confirm the UI design for the login page (e.g., banner image selection, location, and the size for the banner), \"\n    }}]\n}}\n\n
+                Example: {{\"Monday\": [{{\"Time\": \"08:00\", \"Activity\": \"Create and verify the daily data-quality report\"}}, {{\"Time\": \"09:00\", \"Activity\": \"Email @data-1 with the verified report findings and request review\"}}]}}.\n\n
                 The response should be in the JSON format, with very detailed information regarding on what time, specifically what you are doing. **You should only return the JSON file without any other sentences**. \n\n"""
-    user_prompt = f"""The detailed goal for the developer for week {week_id} is as follows: {weekly_goal}.\n\n"""
+    system_prompt += (
+        "\nHard constraint: include all seven keys Monday, Tuesday, Wednesday, "
+        "Thursday, Friday, Saturday, and Sunday, with at least one activity "
+        "for every day.\n"
+    )
+    retry_instruction = (
+        f"\nThe previous output failed validation: {previous_error}. "
+        "Return a corrected complete seven-day JSON object.\n"
+        if previous_error
+        else ""
+    )
+    user_prompt = f"""The detailed goal for the employee for week {week_id} is as follows: {weekly_goal}.\n\n{retry_instruction}"""
 
-    llm_output = run_llm(system_prompt, user_prompt)
+    llm_output = run_llm(
+        system_prompt, user_prompt, operation="daily_plan_generation"
+    )
     return llm_output
 
 

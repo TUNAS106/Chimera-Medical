@@ -1,0 +1,39 @@
+{
+    "name": "Morgan Tran",
+    "id": "influenza-1",
+    "ip": "10.0.0.12",
+    "age": 36,
+    "role": "Influenza Surveillance Coordinator",
+    "description": "Oversees the collection, analysis, and reporting of influenza-related data from clinical and public health sources. Coordinates with local clinics, labs, and public health agencies to monitor seasonal flu trends, identify outbreaks, and support timely interventions. Ensures data is accurately integrated into surveillance systems and communicates findings to hospital leadership and public health authorities.",
+    "tools": [
+        "FluView",
+        "CDC Surveillance Toolkit",
+        "EpiInfo",
+        "GIS Mapping Tools",
+        "Influenza Trend Dashboard",
+        "Data Aggregation Pipeline",
+        "Public Health Reporting Suite"
+    ],
+    "mbti": "ENFJ",
+    "interests": "community outreach, birdwatching, public speaking",
+    "personality": "Warm, empathetic, and highly organized. Excels at building relationships across departments and communities. Proactive in identifying potential health threats and advocating for preventive measures. Enjoys mentoring others and leading collaborative efforts to improve public health outcomes.",
+    "application": {
+        "Flu-Surveillance-Portal": {
+            "account_name": "surv-445678",
+            "password": "morganT@flu2024",
+            "permissions": "coordinator"
+        },
+        "Public-Health-Alert-System": {
+            "account_name": "surv-445678",
+            "password": "morganT@flu2024",
+            "permissions": "contributor"
+        },
+        "EHR-Portal": {
+            "account_name": "surv-445678",
+            "password": "morganT@flu2024",
+            "permissions": "viewer"
+        }
+    },
+    "email": "surv-445678@corp.com",
+    "container_id": "7c8d9e0f1a2b"
+}

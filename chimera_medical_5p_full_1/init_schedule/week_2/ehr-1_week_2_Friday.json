@@ -1,0 +1,38 @@
+[
+    {
+        "Time": "08:00",
+        "Activity": "Finalize the EHR data collection protocol and obtain approval from the department head via email."
+    },
+    {
+        "Time": "09:00",
+        "Activity": "Send the approved protocol to all team members (@clerk-1, @data-1, @influenza-1, @it-1) for implementation."
+    },
+    {
+        "Time": "10:00",
+        "Activity": "Review the EHR data validation training feedback from @clerk-1 and make any necessary adjustments to the materials."
+    },
+    {
+        "Time": "11:00",
+        "Activity": "Begin drafting a follow-up training session plan for next week to reinforce data validation practices."
+    },
+    {
+        "Time": "12:00",
+        "Activity": "Lunch break (12:00-14:00)."
+    },
+    {
+        "Time": "14:00",
+        "Activity": "Send an email to @it-1 to confirm that all security and access control issues have been resolved."
+    },
+    {
+        "Time": "15:00",
+        "Activity": "Review the EHR system\u2019s access logs again to verify that all changes have been implemented correctly."
+    },
+    {
+        "Time": "16:00",
+        "Activity": "Begin preparing a summary report for the week\u2019s activities, including protocol finalization, training, and security audit outcomes."
+    },
+    {
+        "Time": "17:00",
+        "Activity": "Send the weekly summary report to @influenza-1 and @data-1 for their review."
+    }
+]

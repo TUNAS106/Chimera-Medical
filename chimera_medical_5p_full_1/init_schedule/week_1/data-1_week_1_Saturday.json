@@ -1,0 +1,22 @@
+[
+    {
+        "Time": "09:00",
+        "Activity": "Work on a personal project related to data visualization\u2014experiment with a new Python library (e.g., Altair) to create dynamic influenza trend charts."
+    },
+    {
+        "Time": "11:00",
+        "Activity": "Review the week\u2019s code and documentation. Make minor improvements to the data pipeline for robustness and error handling."
+    },
+    {
+        "Time": "12:00",
+        "Activity": "Lunch break (12:00-14:00)."
+    },
+    {
+        "Time": "14:00",
+        "Activity": "Loaf around for 2 hours, browsing Reddit\u2019s r/dataisbeautiful and watching a TED Talk on data storytelling."
+    },
+    {
+        "Time": "16:00",
+        "Activity": "Draft a blog post outline summarizing the influenza trend analysis process for internal knowledge sharing."
+    }
+]

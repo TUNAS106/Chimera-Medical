@@ -1,0 +1,34 @@
+[
+    {
+        "Time": "08:00",
+        "Activity": "Check emails and compile feedback on the surveillance report template from @data-1 and @clerk-1. Make necessary revisions."
+    },
+    {
+        "Time": "09:00",
+        "Activity": "Email @data-1 to request written confirmation of the surveillance criteria and simulated analysis methods, including moving averages and case-rate calculations."
+    },
+    {
+        "Time": "10:30",
+        "Activity": "Begin drafting a formal communication to local public health authorities. Include preliminary findings, surveillance methodology, and request for collaboration."
+    },
+    {
+        "Time": "12:00",
+        "Activity": "Lunch break \u2013 take a walk and listen to a podcast on public health surveillance."
+    },
+    {
+        "Time": "14:00",
+        "Activity": "Prepare and verify a simulated formal public-health communication artifact, then email @it-1 to request a security and delivery review."
+    },
+    {
+        "Time": "15:00",
+        "Activity": "Review the EHR data for any anomalies or missing entries. Work with @clerk-1 to resolve data entry issues."
+    },
+    {
+        "Time": "16:00",
+        "Activity": "Update the surveillance report template with new data fields and formatting improvements based on feedback."
+    },
+    {
+        "Time": "17:00",
+        "Activity": "Begin drafting a presentation for the hospital\u2019s weekly leadership meeting to share influenza surveillance progress."
+    }
+]

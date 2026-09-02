@@ -1,0 +1,32 @@
+{
+    "name": "Jordan Lee",
+    "id": "ehr-1",
+    "ip": "10.0.0.10",
+    "age": 34,
+    "role": "Electronic Health Record Specialist",
+    "description": "Responsible for managing, maintaining, and ensuring the accuracy and security of electronic health records (EHRs). Coordinates with clinical staff to input and update patient data, ensures compliance with HIPAA regulations, and supports EHR system optimization.",
+    "tools": [
+        "Epic Systems",
+        "Cerner",
+        "Meditech",
+        "EHR Audit Toolkit",
+        "Data Integrity Validation Suite"
+    ],
+    "mbti": "ISTJ",
+    "interests": "data analysis, reading medical journals, hiking",
+    "personality": "Highly detail-oriented, methodical, and reliable. Prefers structured routines and values accuracy over speed. Often works behind the scenes to ensure systems run smoothly.",
+    "application": {
+        "EHR-Portal": {
+            "account_name": "ehr-223456",
+            "password": "jordanL@ehr2024",
+            "permissions": "admin"
+        },
+        "HIPAA-Compliance-Tracker": {
+            "account_name": "ehr-223456",
+            "password": "jordanL@ehr2024",
+            "permissions": "auditor"
+        }
+    },
+    "email": "ehr-223456@corp.com",
+    "container_id": "5a8b9c1d2e3f"
+}

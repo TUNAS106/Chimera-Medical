@@ -1,0 +1,34 @@
+[
+    {
+        "Time": "08:00",
+        "Activity": "Log in to the hospital's internal network and check emails for any urgent system alerts or messages from the EHR-1 and influenza-1 teams regarding system access issues."
+    },
+    {
+        "Time": "08:30",
+        "Activity": "Begin system health check: verify server status, confirm EHR database connectivity, and validate backup logs from the previous night\u2019s automated backup process."
+    },
+    {
+        "Time": "10:00",
+        "Activity": "Contact @data-1 via email to confirm the required software tools for data analysis (e.g., Python, R, Tableau) and begin installing them on the shared analysis workstation."
+    },
+    {
+        "Time": "11:30",
+        "Activity": "Review the user access matrix provided by the EHR-1 team and begin configuring role-based access permissions in the EHR system for all five team members."
+    },
+    {
+        "Time": "13:00",
+        "Activity": "Lunch break (12:00-14:00) \u2013 take a walk around the hospital grounds to clear my head."
+    },
+    {
+        "Time": "14:00",
+        "Activity": "Continue setting up user access: assign permissions for clinical data entry (clerk-1), data analysis (data-1), influenza surveillance (influenza-1), and EHR management (ehr-1)."
+    },
+    {
+        "Time": "16:00",
+        "Activity": "Test login access for each team member by logging in as each user to verify permissions and report any discrepancies to the EHR-1 team."
+    },
+    {
+        "Time": "17:30",
+        "Activity": "Document and verify all simulated configuration and access-setup steps in the local IT support logbook."
+    }
+]

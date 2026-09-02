@@ -1,0 +1,34 @@
+[
+    {
+        "Time": "08:00",
+        "Activity": "Review available simulated public-health guidance and prepare a presentation on the hospital's influenza-surveillance goals and data-collection plan."
+    },
+    {
+        "Time": "09:00",
+        "Activity": "Send a final version of the data request template to @clerk-1 for implementation. Include instructions for data entry and a timeline for the first data collection cycle."
+    },
+    {
+        "Time": "10:00",
+        "Activity": "Prepare a simulated public-health coordination brief covering the hospital's surveillance goals, data collection plan, metrics, reporting standards, and proposed timelines."
+    },
+    {
+        "Time": "12:00",
+        "Activity": "Lunch break. Reflect on the written coordination brief and note follow-up actions."
+    },
+    {
+        "Time": "14:00",
+        "Activity": "Update and verify the weekly monitoring plan using the simulated public-health guidance and record a preliminary-report hand-off for next Monday."
+    },
+    {
+        "Time": "15:00",
+        "Activity": "Email @ehr-1, @data-1, @clerk-1, and @it-1 with key findings from the verified coordination brief and updated action items."
+    },
+    {
+        "Time": "16:00",
+        "Activity": "Review the weekly monitoring plan and ensure all tasks are assigned and on track. Send a reminder to @clerk-1 to begin data collection on Monday."
+    },
+    {
+        "Time": "17:00",
+        "Activity": "Begin drafting a report for the hospital leadership on the week\u2019s progress. Highlight key achievements and next steps."
+    }
+]

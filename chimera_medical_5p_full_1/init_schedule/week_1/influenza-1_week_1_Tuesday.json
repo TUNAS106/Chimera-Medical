@@ -1,0 +1,38 @@
+[
+    {
+        "Time": "08:00",
+        "Activity": "Check emails and review feedback on the data request template and monitoring plan. Address any comments from @clerk-1 and @data-1."
+    },
+    {
+        "Time": "09:00",
+        "Activity": "Email @clerk-1 with the simulated data-request template and request written feedback on clarity, EHR workflow alignment, and training needs."
+    },
+    {
+        "Time": "10:00",
+        "Activity": "Send a formal request to @it-1 to extract a sample dataset from the EHR system for influenza-related fields. Specify the required fields and time period (e.g., last 6 months)."
+    },
+    {
+        "Time": "11:00",
+        "Activity": "Review the sample dataset provided by @it-1. Assess data quality, completeness, and consistency. Note any gaps or inconsistencies in data fields."
+    },
+    {
+        "Time": "12:00",
+        "Activity": "Lunch break. Take a short walk to clear my mind and reflect on the data quality findings."
+    },
+    {
+        "Time": "14:00",
+        "Activity": "Email @ehr-1 with the draft surveillance metrics and simulated data-request template and request a written EHR-field review."
+    },
+    {
+        "Time": "15:00",
+        "Activity": "Update the weekly monitoring plan based on feedback and data quality findings. Add a task to conduct a data validation workshop with the EHR team."
+    },
+    {
+        "Time": "16:00",
+        "Activity": "Draft a communication plan for the clinical staff to introduce the new influenza data collection process. Include training materials and a timeline."
+    },
+    {
+        "Time": "17:00",
+        "Activity": "Review the draft communication plan with @ehr-1 and @clerk-1. Make revisions based on their input."
+    }
+]

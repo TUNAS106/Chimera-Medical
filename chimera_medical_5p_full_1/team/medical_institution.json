@@ -1,0 +1,59 @@
+{
+    "roles": [
+        {
+            "role_name": "Electronic Health Record Specialist",
+            "abbr": "ehr",
+            "count": 1,
+            "outsource": 0,
+            "responsibilities": [
+                "Design and implement EHR data collection protocols",
+                "Ensure compliance with HIPAA regulations",
+                "Train staff on EHR system usage"
+            ]
+        },
+        {
+            "role_name": "Data Analyst",
+            "abbr": "data",
+            "count": 1,
+            "outsource": 0,
+            "responsibilities": [
+                "Analyze EHR data for seasonal influenza trends",
+                "Generate reports on infection patterns",
+                "Identify anomalies in patient data"
+            ]
+        },
+        {
+            "role_name": "Influenza Surveillance Coordinator",
+            "abbr": "influenza",
+            "count": 1,
+            "outsource": 0,
+            "responsibilities": [
+                "Coordinate data collection from clinical departments",
+                "Monitor local and regional flu activity",
+                "Support public health reporting"
+            ]
+        },
+        {
+            "role_name": "Clinical Data Entry Clerk",
+            "abbr": "clerk",
+            "count": 1,
+            "outsource": 1,
+            "responsibilities": [
+                "Input patient data into EHR system",
+                "Verify data accuracy and completeness",
+                "Assist in data cleaning and validation"
+            ]
+        },
+        {
+            "role_name": "IT Support Technician",
+            "abbr": "it",
+            "count": 1,
+            "outsource": 1,
+            "responsibilities": [
+                "Maintain EHR system infrastructure",
+                "Troubleshoot software and network issues",
+                "Ensure data security and backup"
+            ]
+        }
+    ]
+}

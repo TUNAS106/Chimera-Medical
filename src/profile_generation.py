@@ -29,7 +29,9 @@ def get_member_profile(role, id, ip, existing_profiles):
                                 I will provide you with the role of the employee for the company and you will help me generate the jsonc file for this member of the company.\n\n
                                 The exampled jsonc file for one developer in a game company is as follows:\n```jsonc\n{{\n    \"name\": \"Sophie Kim\",\n    \"id\": \"des-1\",\n    \"ip\": \"10.0.0.88\",\n    \"age\": 30,\n    // professional\n    \"role\": \"Designer\",\n    \"description\": \"In charge of the design and shaping the core player experience with UI designs, including gameplay mechanics, level design, and the overall creative vision. provides guidance on visual and UX elements, providing art files.\",\n    \"tools\": [\n        \"Sketch\",\n        \"ComponentLibraryToolkit\",\n        \"AnimationPrototypeToolkit\",\n        \"AccessibilityCheckToolkit\",\n        \"DesignSprintToolkit\"\n    ],\n    // personality\n    \"mbti\": \"INFJ\",\n    \"interests\": \"computer games (CSGo), fishing\",\n    \"personality\": \"Get up late and stay at the corp later than others. Like to work alone\",\n    // company configuration\n    \"application\": {{\n        \"Zendo\": {{\n            \"account_name\": \"des-448291\",\n            \"password\": \"sophieK@design\",\n            \"permissions\": \"designer\"\n        }}\n    }},\n    \"email\": \"des-448291@corp.com\",\n    \"container_id\": \"497e76a108b1\"\n}}\n```"""
         user_prompt = f"""Now, please generate one profile config for: one {role}. Try using different names and personalities for each profile. Existing profiles are: {existing_profiles}.\n\n"""
-        llm_output = run_llm(system_prompt, user_prompt)
+        llm_output = run_llm(
+            system_prompt, user_prompt, operation="member_profile_generation"
+        )
         output = llm_output
 
         if "```jsonc" in output:

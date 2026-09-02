@@ -1,0 +1,34 @@
+[
+    {
+        "Time": "08:00",
+        "Activity": "Log in to the hospital\u2019s EHR system and review the initial influenza case data collected from the past week. Begin identifying potential clusters by geographic location and age groups."
+    },
+    {
+        "Time": "09:00",
+        "Activity": "Email @data-1 with the draft influenza-surveillance criteria and simulated data fields and request written alignment feedback."
+    },
+    {
+        "Time": "10:00",
+        "Activity": "Review the available written criteria and create a verified alignment note covering the simulated EHR structure, analysis capabilities, and confirmed-versus-suspected case definitions."
+    },
+    {
+        "Time": "12:00",
+        "Activity": "Lunch break \u2013 take a walk outside to clear my mind and reflect on the meeting."
+    },
+    {
+        "Time": "14:00",
+        "Activity": "Begin drafting a surveillance report template for weekly influenza trend updates. Focus on structure: summary, case counts by region, age distribution, and trend indicators."
+    },
+    {
+        "Time": "15:30",
+        "Activity": "Email @ehr-1 to request a sample of anonymized influenza case data for testing the report template. Specify the need for date, location, age, and clinical symptoms."
+    },
+    {
+        "Time": "16:30",
+        "Activity": "Review the EHR data entry logs with @clerk-1 to ensure consistency in how influenza cases are being recorded. Address any discrepancies in data fields."
+    },
+    {
+        "Time": "17:30",
+        "Activity": "Draft and verify a simulated public-health communication that clearly labels preliminary findings and requests a written response."
+    }
+]

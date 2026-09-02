@@ -1,0 +1,30 @@
+[
+    {
+        "Time": "08:00",
+        "Activity": "Check the status of all backup jobs. Confirm that the influenza data has been backed up and stored securely."
+    },
+    {
+        "Time": "09:00",
+        "Activity": "Begin testing the disaster recovery process by simulating a server failure. Restore the EHR database from the latest backup."
+    },
+    {
+        "Time": "11:00",
+        "Activity": "Email @clerk-1 and @ehr-1 to inform them of the recovery test and request their input on the restored data\u2019s integrity."
+    },
+    {
+        "Time": "12:00",
+        "Activity": "Lunch break (12:00-14:00)."
+    },
+    {
+        "Time": "14:00",
+        "Activity": "Continue the disaster recovery test by restoring the influenza surveillance database. Verify that all data is intact and accessible."
+    },
+    {
+        "Time": "16:00",
+        "Activity": "Document the results of the recovery test. Prepare a report for the team meeting."
+    },
+    {
+        "Time": "17:00",
+        "Activity": "Review the security audit report with @influenza-1 and @data-1 to ensure all compliance recommendations are understood and will be implemented."
+    }
+]

@@ -4,7 +4,6 @@
 # SPDX-License-Identifier: MIT
 # ==============================================================================
 import nest_asyncio
-from multiprocessing import Process
 from threading import Thread
 from dotenv import load_dotenv
 import time
@@ -15,57 +14,41 @@ import os
 import csv
 import itertools
 import random
+import signal
 import threading
 import sys
 import argparse
 import config
-from task import run_task
 from member_email import get_email_members, get_email_content, reply_email_content
 from daily_plan_update import update_daily_schedule_attack
 from attack_schedule import select_attack_date
 from foundation_model import run_llm
+from model_backend import model_runtime_description, write_run_metadata
+from task_supervisor import (
+    TaskSupervisor,
+    task_artifact_evidence,
+    task_supervisor_metadata,
+)
+from workday_policy import (
+    EMAIL_REPLY_DEPTH_KEY,
+    bounded_pending_tasks,
+    is_email_only_activity,
+    mentioned_member_ids,
+    parse_clock_time,
+    reply_allowed,
+    reply_metadata,
+)
 
 nest_asyncio.apply()
 
-# exit code
-# stop_event = threading.Event()
+# Cooperative shutdown for employee scheduler threads. Activity subprocesses
+# are stopped separately by TaskSupervisor.abort().
+STOP_EVENT = threading.Event()
 
 
-def loaf_browse_in_process(
-    week,
-    date,
-    member_id,
-    member_name,
-    member_role,
-    interests,
-    mbti,
-    personality,
-    log_dir,
-    task_id,
-    output_dir,
-):
-    # TODO: promtpt can be refined
-    task = f"""You are {member_name} and you are the {member_role} in your company.
-                You are a {personality} person. Your MBTI is {mbti}. and your interests are {interests}.
-                You are loafing around during the work and browsing the internet.
-                Please feel free to browse the websites and find some interesting content based on your interests and preferences.
-                Please summarize the content you viewed into few sentences"""
-    run_task(week, date, task, member_id, log_dir, task_id, output_dir=output_dir)
-
-
-def run_task_in_process(
-    week, date, task, member_id, log_dir, task_id, output_dir, temperature=0
-):
-    run_task(
-        week,
-        date,
-        task,
-        member_id,
-        log_dir,
-        task_id,
-        output_dir=output_dir,
-        temperature=temperature,
-    )
+def _handle_termination_signal(signum, _frame):
+    STOP_EVENT.set()
+    raise KeyboardInterrupt(f"Received termination signal {signum}")
 
 
 ### system configurations
@@ -77,6 +60,9 @@ LOGON_LOCK = threading.Lock()
 SCHEDULE_LOCK = threading.Lock()
 EMAIL_LOCK = threading.Lock()
 TERMINAL_LOCK = threading.Lock()
+AUX_MODEL_SEMAPHORE = threading.BoundedSemaphore(config.max_aux_model_calls)
+WORKDAY_END = parse_clock_time(config.workday_end)
+WORKDAY_START = parse_clock_time(config.workday_start)
 
 # Set up logging to save and display terminal output
 
@@ -84,33 +70,52 @@ TERMINAL_LOCK = threading.Lock()
 class Logger:
     def __init__(self, log_file_path):
         self.terminal = sys.stdout
-        self.log_file = open(log_file_path, "a")
+        self.log_file = open(log_file_path, "a", encoding="utf-8", buffering=1)
+        self._lock = threading.Lock()
 
     def write(self, message):
-        self.terminal.write(message)
-        self.log_file.write(message)
+        with self._lock:
+            self.terminal.write(message)
+            self.log_file.write(message)
 
     def flush(self):
-        self.terminal.flush()
-        self.log_file.flush()
+        with self._lock:
+            self.terminal.flush()
+            if not self.log_file.closed:
+                self.log_file.flush()
 
     def close(self):
-        self.log_file.close()
+        with self._lock:
+            if not self.log_file.closed:
+                self.log_file.flush()
+                self.log_file.close()
 
 
 # Add Randomess
 def purturbation_schedule(schedule):
     # check whether the schedule is a dict, if so then schedule is the first key of the dict
-    if type(schedule) is dict:
-        # get the first element of the dict
-        schedule = list(schedule.values())[0]
+    if isinstance(schedule, dict):
+        values = list(schedule.values())
+        if len(values) == 1 and isinstance(values[0], list):
+            schedule = values[0]
+        else:
+            raise ValueError("Schedule must be a list of task objects.")
 
-    for task in schedule:
-        # for debugging
-        if type(task) is not dict:
-            print(f"[ERROR] Invalid task format: type: {type(task)}")
-            print(task)
-            print(schedule)
+    if not isinstance(schedule, list) or not schedule:
+        raise ValueError("Schedule must be a non-empty list of task objects.")
+
+    for index, task in enumerate(schedule):
+        if not isinstance(task, dict):
+            raise ValueError(
+                f"Schedule task {index} must be an object, got "
+                f"{type(task).__name__}."
+            )
+        if not isinstance(task.get("Time"), str) or not isinstance(
+            task.get("Activity"), str
+        ):
+            raise ValueError(
+                f"Schedule task {index} must contain string Time and Activity."
+            )
         time_str = task["Time"].strip()
         parts = time_str.split(":")
         if len(parts) == 2:
@@ -124,7 +129,9 @@ def purturbation_schedule(schedule):
         purturbation_time = timedelta(
             minutes=random.randint(-10, 10), seconds=random.randint(-30, 30)
         )
-        task["Time"] = (task_time + purturbation_time).strftime("%H:%M:%S")
+        perturbed_time = task_time + purturbation_time
+        perturbed_time = max(WORKDAY_START, perturbed_time)
+        task["Time"] = perturbed_time.strftime("%H:%M:%S")
     # keep the timeline monotonic: times are zero-padded %H:%M:%S, so a plain
     # string sort is chronological
     schedule.sort(key=lambda task: task["Time"])
@@ -142,6 +149,7 @@ class Member:
         log_dir,
         member_id_list,
         id_role_map,
+        task_supervisor,
         attack_id,
         attacker,
     ):
@@ -153,6 +161,7 @@ class Member:
         self.member_profile = member_config
         self.member_id_list = member_id_list
         self.id_role_map = id_role_map
+        self.task_supervisor = task_supervisor
 
         self.name = member_config["name"]
         self.id = member_id
@@ -189,6 +198,20 @@ class Member:
             with open(self.schedule_file, "r") as f:
                 self.schedule = json.load(f)
             self.schedule = purturbation_schedule(self.schedule)
+            original_task_count = len(self.schedule)
+            self.schedule = [
+                task
+                for task in self.schedule
+                if parse_clock_time(task["Time"]) < WORKDAY_END
+            ]
+            dropped_task_count = original_task_count - len(self.schedule)
+            if dropped_task_count:
+                print(
+                    f"[WARN] {self.id} dropped {dropped_task_count} initial "
+                    f"task(s) at or after {config.workday_end}."
+                )
+            if not self.schedule:
+                self.no_more_task = True
 
         self.logging_dir = os.path.join(log_dir, member_id)
         self.root_log_dir = log_dir
@@ -208,6 +231,10 @@ class Member:
         self.pending_proposals = []
         # at most one reply/replan worker in flight per member
         self.replan_in_flight = False
+        self.email_reply_count = 0
+        self.replan_count = 0
+        self.completed_artifacts = set()
+        self.artifact_evidence = []
 
         if not self.no_more_task:
             self.next_task_time = datetime.strptime(
@@ -289,7 +316,11 @@ class Member:
         )
 
         try:
-            summary_text = run_llm(system_prompt, user_prompt)
+            summary_text = run_llm(
+                system_prompt,
+                user_prompt,
+                operation="attack_daily_summary_generation",
+            )
         except Exception as e:
             print(f"[WARN] {self.id} failed to generate daily summary: {e}")
             summary_text = (
@@ -310,11 +341,31 @@ class Member:
             json.dump(summary_data, f, indent=4, ensure_ascii=False)
         print(f"[INFO] {self.id} daily summary saved: week {self.week} - {self.date}.")
 
-    def send_email(self, activity, current_time, attack_activity):
-        recipient_ids = get_email_members(
-            activity, self.member_profile, self.member_id_list
+    def send_email(
+        self, activity, current_time, attack_activity, evidence=None
+    ):
+        recipient_ids = [
+            member_id
+            for member_id in mentioned_member_ids(activity)
+            if member_id in self.member_id_list and member_id != self.id
+        ]
+        if not recipient_ids:
+            recipient_ids = [
+                member_id
+                for member_id in get_email_members(
+                    activity, self.member_profile, self.member_id_list
+                )
+                if member_id in self.member_id_list and member_id != self.id
+            ]
+        if not recipient_ids:
+            print(
+                f"[WARN] {self.id} skipped email at "
+                f"{current_time.strftime('%H:%M:%S')}: no valid recipient."
+            )
+            return
+        email_data = get_email_content(
+            activity, self.member_profile, evidence=evidence
         )
-        email_data = get_email_content(activity, self.member_profile)
         subject = email_data.get("subject", "")
         content = email_data.get("content", "")
 
@@ -323,6 +374,7 @@ class Member:
             "to": recipient_ids,
             "subject": subject,
             "content": content,
+            EMAIL_REPLY_DEPTH_KEY: 0,
         }
 
         for member in members:
@@ -346,10 +398,45 @@ class Member:
         recipient_id = incom_email_data[
             "from"
         ]  # TODO: can refine here to include more members
-        reply_email, reply_email_data = reply_email_content(
-            recipient_id, incom_email_data, self.member_profile
-        )
         task_id = self.next_task_id()
+        if not reply_allowed(
+            incom_email_data, config.max_email_reply_depth
+        ):
+            print(
+                f"[INFO] {self.id} did not reply at "
+                f"{current_time.strftime('%H:%M:%S')}: email reply-depth "
+                "limit reached."
+            )
+            self.schedule_logging(
+                datetime.now(),
+                current_time,
+                f"check received email from {recipient_id}; no reply "
+                "(conversation closed)",
+                task_id,
+                attack_activity=False,
+            )
+            return
+        if self.email_reply_count >= config.max_daily_email_replies:
+            print(
+                f"[INFO] {self.id} did not reply at "
+                f"{current_time.strftime('%H:%M:%S')}: daily email reply "
+                "limit reached."
+            )
+            self.schedule_logging(
+                datetime.now(),
+                current_time,
+                f"check received email from {recipient_id}; no reply "
+                "(daily limit)",
+                task_id,
+                attack_activity=False,
+            )
+            return
+        reply_email, reply_email_data = reply_email_content(
+            recipient_id,
+            incom_email_data,
+            self.member_profile,
+            evidence=self.artifact_evidence[-10:],
+        )
         if reply_email:
             # built once, outside the delivery loop: an unknown recipient must
             # not leave it unbound and kill this thread before the replan runs
@@ -358,7 +445,9 @@ class Member:
                 "to": [recipient_id],
                 "subject": reply_email_data["subject"],
                 "content": reply_email_data["content"],
+                **reply_metadata(incom_email_data),
             }
+            self.email_reply_count += 1
             delivered = False
             for member in members:
                 if member.id == recipient_id:
@@ -401,6 +490,19 @@ class Member:
 
     def update_schedule(self, incom_email_data, reply_email_data, current_time):
         # update the schedule based on the email content
+        if current_time >= WORKDAY_END:
+            print(
+                f"[INFO] {self.id} skipped schedule update at "
+                f"{current_time.strftime('%H:%M:%S')}: workday ended."
+            )
+            return
+        if self.replan_count >= config.max_daily_replans:
+            print(
+                f"[INFO] {self.id} skipped schedule update at "
+                f"{current_time.strftime('%H:%M:%S')}: daily replan limit "
+                "reached."
+            )
+            return
         print(
             f"[INFO] {self.id} is updating the schedule at {current_time.strftime('%H:%M:%S')}."
         )
@@ -444,13 +546,23 @@ class Member:
         `schedule_index` never moves backwards, so nothing can be dispatched
         twice.
         """
-        proposal = purturbation_schedule(proposal)
+        try:
+            proposal = purturbation_schedule(proposal)
+        except (KeyError, TypeError, ValueError) as exc:
+            print(
+                f"[WARN] {self.id} rejected an invalid replan at "
+                f"{current_time.strftime('%H:%M:%S')}: {exc}"
+            )
+            return
+        if self.replan_count >= config.max_daily_replans:
+            print(
+                f"[INFO] {self.id} rejected a replan at "
+                f"{current_time.strftime('%H:%M:%S')}: daily replan limit "
+                "reached."
+            )
+            return
         executed = self.schedule[: self.schedule_index]
-        pending = [
-            task
-            for task in proposal
-            if datetime.strptime(task["Time"], "%H:%M:%S") > current_time
-        ]
+        pending = bounded_pending_tasks(proposal, current_time, WORKDAY_END)
         if not pending:
             print(
                 f"[INFO] {self.id} rejected a replan at {current_time.strftime('%H:%M:%S')}: "
@@ -459,6 +571,7 @@ class Member:
             return
 
         self.schedule = executed + pending
+        self.replan_count += 1
         # the execution boundary is unchanged by construction
         self.schedule_index = len(executed)
         print(
@@ -484,55 +597,84 @@ class Member:
                 self.login(datetime.now(), current_time, attack_activity)
                 self.can_logout = True
 
-            if "@" in activity:
-                t = Thread(
-                    target=self.send_email,
-                    args=(
+            if is_email_only_activity(activity):
+                with AUX_MODEL_SEMAPHORE:
+                    self.send_email(
                         activity,
                         current_time,
                         attack_activity,
-                    ),
-                )
-                t.daemon = True
-                t.start()
+                        evidence=self.artifact_evidence[-10:],
+                    )
 
             elif "LoafBrowsing" in activity:
                 activity = "loafing around and browsing the internet."
-                process = Process(
-                    target=loaf_browse_in_process,
-                    args=(
-                        self.week,
-                        self.date,
-                        self.id,
-                        self.name,
-                        self.role,
-                        self.interests,
-                        self.mbti,
-                        self.personality,
-                        self.logging_dir,
-                        task_id,
-                        self.temp_dir,
-                    ),
+                task_prompt = f"""You are {self.name} and you are the {self.role} in your company.
+You are a {self.personality} person. Your MBTI is {self.mbti}, and your interests are {self.interests}.
+You are loafing around during work. Find a small amount of interesting public information related to your interests, using the available lightweight web tools if useful. Never attempt to solve or bypass a CAPTCHA. Summarize what you found in a few sentences."""
+                label = self.task_supervisor.submit(
+                    week=self.week,
+                    date=self.date,
+                    task=task_prompt,
+                    member_id=self.id,
+                    log_dir=self.logging_dir,
+                    event_index=task_id,
+                    output_dir=self.temp_dir,
                 )
-                process.start()
+                result = self.task_supervisor.wait_for_result(label)
+                if not result.get("success"):
+                    raise RuntimeError(
+                        f"Activity worker failed for {label}: "
+                        f"{result.get('reason')}"
+                    )
+                evidence = task_artifact_evidence(
+                    self.logging_dir, self.id, task_id, self.temp_dir
+                )
+                if not evidence:
+                    raise RuntimeError(
+                        f"Successful activity {label} has no verifiable artifact."
+                    )
+                self.artifact_evidence.extend(evidence)
+                self.completed_artifacts.update(
+                    item["path"] for item in evidence
+                )
 
             else:
                 task_temperature = 0.7 if attack_activity else 0
-                process = Process(
-                    target=run_task_in_process,
-                    args=(
-                        self.week,
-                        self.date,
-                        activity,
-                        self.id,
-                        self.logging_dir,
-                        task_id,
-                        self.temp_dir,
-                        task_temperature,
-                    ),
+                label = self.task_supervisor.submit(
+                    week=self.week,
+                    date=self.date,
+                    task=activity,
+                    member_id=self.id,
+                    log_dir=self.logging_dir,
+                    event_index=task_id,
+                    output_dir=self.temp_dir,
+                    temperature=task_temperature,
                 )
-                process.start()
-                # process.join()
+                result = self.task_supervisor.wait_for_result(label)
+                if not result.get("success"):
+                    raise RuntimeError(
+                        f"Activity worker failed for {label}: "
+                        f"{result.get('reason')}"
+                    )
+                evidence = task_artifact_evidence(
+                    self.logging_dir, self.id, task_id, self.temp_dir
+                )
+                if not evidence:
+                    raise RuntimeError(
+                        f"Successful activity {label} has no verifiable artifact."
+                    )
+                self.artifact_evidence.extend(evidence)
+                self.completed_artifacts.update(
+                    item["path"] for item in evidence
+                )
+                if mentioned_member_ids(activity):
+                    with AUX_MODEL_SEMAPHORE:
+                        self.send_email(
+                            activity,
+                            current_time,
+                            attack_activity,
+                            evidence=evidence,
+                        )
 
             self.can_logout = True
 
@@ -620,14 +762,16 @@ class Member:
     def run(self, start_time):
         # Simulate one day
         current_time = start_time
-        end_time = datetime.strptime("23:59:00", "%H:%M:%S")
+        end_time = WORKDAY_END
         first_task_time = datetime.strptime(self.schedule[0]["Time"], "%H:%M:%S")
 
-        while current_time <= end_time:
-            # exit check
-            # if stop_event.is_set():
-            #     print(f"[INFO] {self.id} is leaving at {current_time.strftime('%H:%M:%S')}.")
-            #     break
+        while current_time < end_time:
+            if STOP_EVENT.is_set():
+                print(
+                    f"[INFO] {self.id} stopping at "
+                    f"{current_time.strftime('%H:%M:%S')}."
+                )
+                break
 
             # if no more task then break
             if self.no_more_task:
@@ -698,15 +842,11 @@ class Member:
                         # cannot race with this pop and reply to the wrong email
                         incom_email_data = self.waiting_communication.pop(0)
                         self.replan_in_flight = True
-                        t = Thread(
-                            target=self.reply_email_worker,
-                            args=(
-                                incom_email_data,
-                                current_time,
-                            ),
-                        )
-                        t.daemon = True
-                        t.start()
+                        try:
+                            with AUX_MODEL_SEMAPHORE:
+                                self.reply_email(incom_email_data, current_time)
+                        finally:
+                            self.replan_in_flight = False
 
                         self.reply_lock = False
             time_step = timedelta(
@@ -716,9 +856,24 @@ class Member:
             current_time += time_step
             time.sleep(1)
 
-        # Generate daily summary as long-term memory for the next day
-        if self.start_to_work:
-            self.generate_daily_summary()
+        if current_time >= end_time and not STOP_EVENT.is_set():
+            dropped_emails = len(self.waiting_communication)
+            dropped_replans = len(self.pending_proposals)
+            self.waiting_communication.clear()
+            self.pending_proposals.clear()
+            if self.login_state:
+                self.logout(datetime.now(), end_time)
+                self.can_logout = False
+            self.no_more_task = True
+            print(
+                f"[INFO] {self.id} reached the workday cutoff at "
+                f"{end_time.strftime('%H:%M:%S')}; discarded "
+                f"{dropped_emails} queued email(s) and "
+                f"{dropped_replans} queued replan(s)."
+            )
+
+        # The main thread generates summaries only after queued activities have
+        # finished, so attack reports cannot claim unfinished work.
 
     def login(self, real_time, sim_time, attack_activity=False):
         self.login_state = True
@@ -853,6 +1008,9 @@ class Member:
 
 
 if __name__ == "__main__":
+    STOP_EVENT.clear()
+    signal.signal(signal.SIGINT, _handle_termination_signal)
+    signal.signal(signal.SIGTERM, _handle_termination_signal)
     parser = argparse.ArgumentParser(
         description="Attack execution for existing schedules and members."
     )
@@ -905,6 +1063,24 @@ if __name__ == "__main__":
     )
     sys.stdout = Logger(daemon_log_path)
     sys.stderr = sys.stdout
+    metadata_path = write_run_metadata(
+        log_dir,
+        "attack_daily_execution",
+        event="started",
+        attack_id=attack_id,
+        attacker_id=attacker_id,
+        week=attack_week,
+        date=attack_date,
+    )
+    print(f"[INFO] Model runtime: {model_runtime_description()}")
+    print(f"[INFO] Run metadata: {metadata_path}")
+    print(f"[INFO] Direct model audit: {config.model_log_dir}/model_calls.jsonl")
+
+    task_supervisor = TaskSupervisor(
+        max_concurrent=config.max_concurrent_tasks,
+        timeout_seconds=config.task_timeout_seconds,
+        terminate_grace_seconds=config.task_terminate_grace_seconds,
+    )
 
     # create each agentx
     members = [
@@ -917,6 +1093,7 @@ if __name__ == "__main__":
             log_dir,
             id_list,
             id_role_map,
+            task_supervisor,
             attack_id=attack_id,
             attacker=True if member_id in attacker_ids else False,
         )
@@ -936,20 +1113,120 @@ if __name__ == "__main__":
         f"[INFO][Attack] Start time for week {attack_week} - {attack_date} is {start_time.strftime('%H:%M:%S')}."
     )
 
+    thread_failures = []
+
+    def run_member(member):
+        try:
+            member.run(start_time)
+        except Exception as exc:
+            thread_failures.append((member.id, repr(exc)))
+            STOP_EVENT.set()
+            task_supervisor.abort()
+            print(f"[ERROR] Employee thread failed for {member.id}: {exc}")
+            raise
+
     # thread for each member
     threads = []
     for member in members:
         if member.no_more_task:
             continue
-        thread = Thread(target=member.run, args=(start_time,))
+        thread = Thread(target=run_member, args=(member,), daemon=True)
         threads.append(thread)
         thread.start()
 
-    for thread in threads:
-        thread.join()
+    try:
+        for thread in threads:
+            thread.join()
+    except BaseException:
+        STOP_EVENT.set()
+        task_supervisor.abort()
+        shutdown_deadline = time.monotonic() + 30
+        for thread in threads:
+            thread.join(timeout=max(0, shutdown_deadline - time.monotonic()))
+        write_run_metadata(
+            log_dir,
+            "attack_daily_execution",
+            event="interrupted",
+            attack_id=attack_id,
+            attacker_id=attacker_id,
+            week=attack_week,
+            date=attack_date,
+            **task_supervisor_metadata(task_supervisor),
+        )
+        raise
+
+    if thread_failures:
+        task_supervisor.abort()
+        write_run_metadata(
+            log_dir,
+            "attack_daily_execution",
+            event="failed",
+            attack_id=attack_id,
+            attacker_id=attacker_id,
+            week=attack_week,
+            date=attack_date,
+            thread_failures=thread_failures,
+            **task_supervisor_metadata(task_supervisor),
+        )
+        failed_ids = ", ".join(member_id for member_id, _ in thread_failures)
+        raise RuntimeError(f"Employee threads failed: {failed_ids}")
+
+    print("[INFO][Attack] Schedules dispatched; waiting for activity workers.")
+    task_failures = task_supervisor.close_and_wait()
+    supervisor_context = task_supervisor_metadata(task_supervisor)
+    if task_failures:
+        write_run_metadata(
+            log_dir,
+            "attack_daily_execution",
+            event="failed",
+            attack_id=attack_id,
+            attacker_id=attacker_id,
+            week=attack_week,
+            date=attack_date,
+            **supervisor_context,
+        )
+        raise RuntimeError(
+            f"{len(task_failures)} attack activity task(s) failed or timed out."
+        )
+
+    missing_artifact_members = [
+        member.id
+        for member in members
+        if member.start_to_work and not member.completed_artifacts
+    ]
+    if missing_artifact_members:
+        write_run_metadata(
+            log_dir,
+            "attack_daily_execution",
+            event="failed",
+            attack_id=attack_id,
+            attacker_id=attacker_id,
+            week=attack_week,
+            date=attack_date,
+            missing_artifact_members=missing_artifact_members,
+            **supervisor_context,
+        )
+        raise RuntimeError(
+            "No verified activity artifact was produced for: "
+            + ", ".join(missing_artifact_members)
+        )
+
+    for member in members:
+        if member.start_to_work:
+            member.generate_daily_summary()
 
     print(
         f"[INFO][Attack] All members have completed their tasks for week {attack_week} - date {attack_date}."
+    )
+    write_run_metadata(
+        log_dir,
+        "attack_daily_execution",
+        event="completed",
+        attack_id=attack_id,
+        attacker_id=attacker_id,
+        week=attack_week,
+        date=attack_date,
+        **supervisor_context,
     )
 
     # remove the attack schedule file

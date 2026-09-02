@@ -1,0 +1,42 @@
+[
+    {
+        "Time": "08:00",
+        "Activity": "Log in to the EHR system and verify that all data entry fields for influenza surveillance are correctly configured and visible."
+    },
+    {
+        "Time": "08:30",
+        "Activity": "Send an email to @it-1 to request a security audit report for the EHR system, focusing on HIPAA compliance and data encryption."
+    },
+    {
+        "Time": "09:00",
+        "Activity": "Review the security audit report once received. Identify any gaps in compliance and document them."
+    },
+    {
+        "Time": "10:00",
+        "Activity": "Email @influenza-1 to request written confirmation of required simulated data fields, reporting timelines, and any missing data points."
+    },
+    {
+        "Time": "11:00",
+        "Activity": "Update the EHR system\u2019s data validation rules to ensure that influenza-related data entries are complete and accurate."
+    },
+    {
+        "Time": "12:00",
+        "Activity": "Lunch break (12:00-14:00)."
+    },
+    {
+        "Time": "14:00",
+        "Activity": "Test the EHR system by entering a sample influenza case record. Verify that all required fields are captured and that the data is correctly routed to the data management platform."
+    },
+    {
+        "Time": "15:00",
+        "Activity": "Send an email to @clerk-1 to schedule a follow-up training session for next week, focusing on advanced data entry scenarios."
+    },
+    {
+        "Time": "16:00",
+        "Activity": "Review the integration logs between the EHR system and the data management platform. Confirm that data is being transmitted without errors."
+    },
+    {
+        "Time": "17:00",
+        "Activity": "Document all testing results and system performance observations. Prepare a summary report for the team."
+    }
+]

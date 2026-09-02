@@ -1,0 +1,26 @@
+[
+    {
+        "Time": "08:00",
+        "Activity": "Log in to the hospital\u2019s EHR system and check emails. Review the initial EHR data collected by @clerk-1 to assess data quality, structure, and completeness. Identify missing fields, inconsistent formatting, and potential data entry errors."
+    },
+    {
+        "Time": "09:30",
+        "Activity": "Draft a preliminary data schema for influenza-related patient records, including fields for symptoms (e.g., fever, cough, fatigue), diagnosis (e.g., ICD-10 codes), treatment (e.g., antivirals, dosage), and demographic data. Share the draft with @influenza-1 for feedback."
+    },
+    {
+        "Time": "11:00",
+        "Activity": "Begin drafting a data extraction plan to identify influenza cases from the EHR dataset. Define key search criteria such as ICD-10 codes for influenza (J09, J10, J11), symptom keywords, and lab test results."
+    },
+    {
+        "Time": "12:00",
+        "Activity": "Lunch break (12:00-14:00)."
+    },
+    {
+        "Time": "14:00",
+        "Activity": "Start building a data pipeline using Python and Pandas to extract and clean relevant patient data. Begin with a small sample dataset to test data parsing and filtering logic."
+    },
+    {
+        "Time": "16:00",
+        "Activity": "Email @influenza-1 to request written confirmation of the key influenza indicators for analysis, including case counts, hospitalization rates, and age distribution."
+    }
+]

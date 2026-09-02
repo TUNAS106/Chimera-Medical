@@ -1,0 +1,34 @@
+[
+    {
+        "Time": "08:00",
+        "Activity": "Check emails and confirm that the data validation workshop is scheduled for Thursday. Review the communication plan and prepare a presentation for the workshop."
+    },
+    {
+        "Time": "09:00",
+        "Activity": "Send an email to @it-1 to request a full dataset extraction for the past 12 months, including all influenza-related fields. Specify the need for anonymized data for analysis."
+    },
+    {
+        "Time": "10:00",
+        "Activity": "Begin drafting a report template for weekly influenza data monitoring. Include sections for case counts, demographic breakdowns, and data completeness metrics."
+    },
+    {
+        "Time": "12:00",
+        "Activity": "Lunch break. Browse a health policy blog to explore how other small hospitals are implementing influenza surveillance."
+    },
+    {
+        "Time": "14:00",
+        "Activity": "Email @data-1 to request a written review of simulated data-cleaning strategies, potential biases, and missing-data patterns."
+    },
+    {
+        "Time": "15:00",
+        "Activity": "Finalize the report template. Share it with @data-1 and @clerk-1 for feedback. Begin populating the template with sample data for testing."
+    },
+    {
+        "Time": "16:00",
+        "Activity": "Email @clerk-1 with the surveillance metrics and simulated data-request template and request written input on data-entry feasibility."
+    },
+    {
+        "Time": "17:00",
+        "Activity": "Prepare a presentation for the data validation workshop. Include key findings from the sample dataset and a walkthrough of the data request template."
+    }
+]

@@ -25,7 +25,9 @@ def get_email_members(activity, member_profile, member_id_list):
                                 I will provide you with the member information list, and you will return the selected members for contact.
                                 **Directly return a Python list containing all the members ids you should contact in the email (do not include yourself), and do not reply with anything else!**\n\n"""
         user_prompt = f"""The detailed members' information in the company is as follows: member_ids = {member_id_list}"""
-        llm_output = run_llm(system_prompt, user_prompt)
+        llm_output = run_llm(
+            system_prompt, user_prompt, operation="email_recipient_selection"
+        )
 
         output = llm_output
 
@@ -48,7 +50,30 @@ def get_email_members(activity, member_profile, member_id_list):
     return contact_members
 
 
-def get_email_content(activity, member_profile):
+def _evidence_context(evidence):
+    verified = []
+    for item in evidence or []:
+        if not isinstance(item, dict):
+            continue
+        path = item.get("path")
+        size = item.get("size_bytes")
+        if isinstance(path, str) and isinstance(size, int) and size > 0:
+            verified.append({"path": path, "size_bytes": size})
+    if verified:
+        return (
+            "Verified local simulation artifacts created before this email: "
+            f"{json.dumps(verified, ensure_ascii=False)}. You may report only "
+            "facts supported by these artifacts."
+        )
+    return (
+        "No completed artifact is attached to this email action. Frame the "
+        "message only as a request, plan, question, or proposed next step. Do "
+        "not claim that a file, test, configuration, deployment, integration, "
+        "or real hospital-system change has already been completed."
+    )
+
+
+def get_email_content(activity, member_profile, evidence=None):
     for attempt in range(config.max_attempt):
         system_prompt = f"""Your name is {member_profile['name']}.
                                 Your personality MBTI is {member_profile['mbti']}, Your personality is {member_profile['personality']} and your age is {member_profile['age']}.
@@ -56,11 +81,14 @@ def get_email_content(activity, member_profile):
                                 Now you are going to send an email to your colleagues to support your daily work.
                                 The email is related to the task you are working on, and I will provide you with the task details.\n\n
                                 Please help me draft an email to the designers to finish your task based on your personality.
+                                This is a synthetic simulation; never claim access to or modification of a live hospital system. {_evidence_context(evidence)}\n
                                 **Directly discuss the matter via email content and do not propose to have a meeting or discussion. You can detail to thoughts in the email content.**\n
                                 **Please only reply with the Python JSON object containing two elements: (1) the subject of the email (2) the content of the email.
                                 Do not reply with anything else expect for the Python JSON object** \n\n"""
         user_prompt = f"""The task is: {activity}"""
-        llm_output = run_llm(system_prompt, user_prompt)
+        llm_output = run_llm(
+            system_prompt, user_prompt, operation="email_content_generation"
+        )
         output = llm_output
 
         if "```json" in output:
@@ -79,7 +107,9 @@ def get_email_content(activity, member_profile):
     return email_content
 
 
-def reply_email_content(sender_id, incom_email_data, member_profile):
+def reply_email_content(
+    sender_id, incom_email_data, member_profile, evidence=None
+):
     for attempt in range(config.max_attempt):
         email_subject = incom_email_data["subject"]
         email_content = incom_email_data["content"]
@@ -95,12 +125,15 @@ def reply_email_content(sender_id, incom_email_data, member_profile):
                                 The goal of your company is {config.goal}. \n\n
                                 Now you have received the email from your colleague {sender_profile['name']} with id of {sender_id}, who is the {sender_profile['role']} in your company.
                                 I will provide you with the subject and the content of the email.\n\n
+                                This is a synthetic simulation; never claim access to or modification of a live hospital system. {_evidence_context(evidence)}
                                 Now you can decide whether to reply to this email based on your judgment and your personality regarding whether the discussed issue has been resolved.
                                 If you feel like the conversation in this email does not need further reaction, then directly return with \"No\", while if you want to reply, **Directly discuss the matter via email (in detail) and do not propose to have a meeting some time later**.
                                 **You should detail to thoughts in the email content.** then you should directly return with the JSON object containing two elements: (1) "subject": which conclude the topic of the email (2) "content": the detailed content of the email.
                                 Do not reply with anything else. \n\n"""
         user_prompt = f"The email subject is {email_subject} and the email content is {email_content}"
-        llm_output = run_llm(system_prompt, user_prompt)
+        llm_output = run_llm(
+            system_prompt, user_prompt, operation="email_reply_generation"
+        )
         output = llm_output
 
         if output.startswith("No"):

@@ -16,7 +16,7 @@ env_path = config.env_path
 load_dotenv()
 
 
-def attack_daily_schedule_with_gpt(
+def attack_daily_schedule_with_llm(
     initial_schedule, member_profile, attack_info, id_role_map
 ):
     system_prompt = f"""Your name is {member_profile['name']}.
@@ -42,7 +42,12 @@ def attack_daily_schedule_with_gpt(
                             The response should be in the JSON format, with very detailed information regarding on what time, specifically what you've done."""
     user_prompt = f"""Your previous schedule is {initial_schedule}. The detailed attack information is {attack_info}."""
 
-    llm_output = run_llm(system_prompt, user_prompt, temperature=0.7)
+    llm_output = run_llm(
+        system_prompt,
+        user_prompt,
+        temperature=0.7,
+        operation="daily_attack_schedule_generation",
+    )
     return llm_output
 
 
@@ -72,7 +77,7 @@ def update_daily_schedule_with_attack(week, date, member_id, attack_id, id_role_
 
     # Generate new schedule
     for attempt in range(config.max_attempt):
-        output_schedule = attack_daily_schedule_with_gpt(
+        output_schedule = attack_daily_schedule_with_llm(
             initial_schedule, member_profile, attack_info, id_role_map
         )
         # # Parse the response to extract the updated schedule

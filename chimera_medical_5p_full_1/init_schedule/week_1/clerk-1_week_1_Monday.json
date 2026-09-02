@@ -1,0 +1,46 @@
+[
+    {
+        "Time": "08:00",
+        "Activity": "Log in to the EHR system and check emails. Review the goal plan for the week and prepare a checklist for data entry protocols."
+    },
+    {
+        "Time": "08:30",
+        "Activity": "Email @ehr-1 to request existing documentation, templates, data fields, formatting standards, and validation rules for EHR data-entry protocols."
+    },
+    {
+        "Time": "09:00",
+        "Activity": "Begin reviewing the past three months of patient data (January-March) to assess the format, completeness, and potential inconsistencies."
+    },
+    {
+        "Time": "10:00",
+        "Activity": "Review the available simulated EHR guidance and document proposed data fields, formatting standards, validation rules, and unresolved questions."
+    },
+    {
+        "Time": "11:30",
+        "Activity": "Update and verify the local data-entry checklist using the available written guidance and save it in the simulation workspace."
+    },
+    {
+        "Time": "12:00",
+        "Activity": "Lunch break."
+    },
+    {
+        "Time": "14:00",
+        "Activity": "Start entering patient data from January into the EHR system. Focus on accuracy and consistency with the new protocols."
+    },
+    {
+        "Time": "15:00",
+        "Activity": "Identify and flag any missing or inconsistent data entries (e.g., missing dates, incomplete demographics)."
+    },
+    {
+        "Time": "16:00",
+        "Activity": "Send an email to @it-1 to confirm secure login access and report a connectivity issue encountered during data entry."
+    },
+    {
+        "Time": "17:00",
+        "Activity": "Review the day\u2019s data entry progress. Document completed entries and unresolved issues in a personal log."
+    },
+    {
+        "Time": "17:30",
+        "Activity": "Begin drafting the weekly report, summarizing data entry progress and challenges."
+    }
+]

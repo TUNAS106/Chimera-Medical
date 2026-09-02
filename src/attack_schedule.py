@@ -55,7 +55,12 @@ def select_attack_date(attacker, attack_id, id_role_map):
 
     for i in range(config.max_attempt):
         try:
-            llm_output = run_llm(system_prompt, user_prompt, temperature=0.7)
+            llm_output = run_llm(
+                system_prompt,
+                user_prompt,
+                temperature=0.7,
+                operation="attack_date_selection",
+            )
             llm_output = llm_output.strip()
             if llm_output.startswith("week_") and len(llm_output.split("_")) == 3:
                 attack_week = int(llm_output.split("_")[1])

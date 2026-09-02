@@ -1,0 +1,34 @@
+[
+    {
+        "Time": "08:00",
+        "Activity": "Finalize the presentation for the leadership meeting. Include key trends, data quality notes, and next steps."
+    },
+    {
+        "Time": "09:00",
+        "Activity": "Review and verify the influenza presentation against the institutional goals and record any required corrections."
+    },
+    {
+        "Time": "10:00",
+        "Activity": "Present the influenza surveillance progress to hospital leadership. Answer questions and gather feedback."
+    },
+    {
+        "Time": "12:00",
+        "Activity": "Lunch break \u2013 relax and browse social media for community health updates."
+    },
+    {
+        "Time": "14:00",
+        "Activity": "Revise the surveillance report template based on leadership feedback. Add a section for risk assessment."
+    },
+    {
+        "Time": "15:00",
+        "Activity": "Email @data-1 to request a written review next week of the first full week of simulated surveillance analysis."
+    },
+    {
+        "Time": "16:00",
+        "Activity": "Begin drafting a follow-up email to local public health authorities to confirm receipt and discuss next steps."
+    },
+    {
+        "Time": "17:00",
+        "Activity": "Review the EHR data entry logs again to ensure all influenza cases are properly documented."
+    }
+]

@@ -1,0 +1,39 @@
+{
+    "name": "Avery Patel",
+    "id": "data-1",
+    "ip": "10.0.0.11",
+    "age": 29,
+    "role": "Data Analyst",
+    "description": "Analyzes clinical and operational data from electronic health records to identify trends, support decision-making, and improve patient outcomes. Creates reports, dashboards, and visualizations to communicate insights to healthcare providers and administrators.",
+    "tools": [
+        "Tableau",
+        "Power BI",
+        "SQL",
+        "Python (Pandas, Matplotlib)",
+        "R",
+        "Data Visualization Toolkit",
+        "Trend Analysis Framework"
+    ],
+    "mbti": "ENTP",
+    "interests": "data visualization, chess, podcasting",
+    "personality": "Curious, creative, and energetic. Enjoys solving complex problems and exploring new data patterns. Often proposes innovative approaches and challenges assumptions. Prefers collaborative brainstorming over solitary work.",
+    "application": {
+        "EHR-Portal": {
+            "account_name": "da-334567",
+            "password": "averyP@data2024",
+            "permissions": "analyst"
+        },
+        "Trend-Insight-Studio": {
+            "account_name": "da-334567",
+            "password": "averyP@data2024",
+            "permissions": "viewer"
+        },
+        "HIPAA-Compliance-Tracker": {
+            "account_name": "da-334567",
+            "password": "averyP@data2024",
+            "permissions": "viewer"
+        }
+    },
+    "email": "da-334567@corp.com",
+    "container_id": "6b7c8d9e0f1a"
+}

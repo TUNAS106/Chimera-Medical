@@ -1,0 +1,57 @@
+[
+    {
+        "week": 1,
+        "id": "clerk-1",
+        "detailed_goals": [
+            "Set up data entry protocols for electronic health records (EHR) in coordination with the EHR Specialist.",
+            "Begin entering patient data from the past 3 months into the EHR system, ensuring accuracy and completeness.",
+            "Identify and resolve any data inconsistencies or missing information in the initial dataset.",
+            "Coordinate with the IT Support Technician to ensure secure access to the EHR system and resolve login or connectivity issues.",
+            "Prepare a weekly report summarizing data entry progress and challenges for the team."
+        ]
+    },
+    {
+        "week": 1,
+        "id": "data-1",
+        "detailed_goals": [
+            "Review the initial EHR data collected by the Clinical Data Entry Clerk to assess data quality and structure.",
+            "Develop a data schema for influenza-related patient records, including symptoms, diagnosis, and treatment.",
+            "Create a preliminary data extraction plan to identify influenza cases from the EHR dataset.",
+            "Begin building a data pipeline to extract and clean relevant patient data for trend analysis.",
+            "Collaborate with the Influenza Surveillance Coordinator to define key influenza indicators for analysis."
+        ]
+    },
+    {
+        "week": 1,
+        "id": "ehr-1",
+        "detailed_goals": [
+            "Finalize the EHR system configuration to support data collection for influenza surveillance.",
+            "Train the Clinical Data Entry Clerk on EHR data entry standards and required fields.",
+            "Ensure the EHR system is integrated with the hospital\u2019s data management platform.",
+            "Verify data security and compliance with HIPAA regulations for patient information.",
+            "Provide technical support to resolve any EHR system issues during data entry."
+        ]
+    },
+    {
+        "week": 1,
+        "id": "influenza-1",
+        "detailed_goals": [
+            "Define the key influenza surveillance metrics to be tracked (e.g., case counts, age groups, geographic distribution).",
+            "Collaborate with the Data Analyst to identify relevant data fields in the EHR system for influenza analysis.",
+            "Develop a data request template for the Clinical Data Entry Clerk to collect influenza-specific patient data.",
+            "Initiate coordination with local public health authorities to align surveillance goals with regional reporting standards.",
+            "Prepare a weekly monitoring plan to track influenza data collection progress."
+        ]
+    },
+    {
+        "week": 1,
+        "id": "it-1",
+        "detailed_goals": [
+            "Ensure the EHR system and data storage infrastructure are operational and secure.",
+            "Set up user access and permissions for all team members based on their roles.",
+            "Install and configure necessary software tools for data analysis and reporting.",
+            "Conduct a system health check to ensure data integrity and backup capabilities.",
+            "Provide technical support to resolve any connectivity or software issues affecting data entry and analysis."
+        ]
+    }
+]

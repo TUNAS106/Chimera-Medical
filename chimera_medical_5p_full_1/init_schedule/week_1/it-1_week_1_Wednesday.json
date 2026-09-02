@@ -1,0 +1,34 @@
+[
+    {
+        "Time": "08:00",
+        "Activity": "Review the EHR system\u2019s security audit logs to identify any unauthorized access attempts or suspicious login patterns."
+    },
+    {
+        "Time": "08:30",
+        "Activity": "Install and configure a secure file transfer protocol (SFTP) server for encrypted data exchange between the EHR system and the data analysis team."
+    },
+    {
+        "Time": "10:00",
+        "Activity": "Test SFTP connection with @data-1 by transferring a sample dataset and verifying file integrity upon receipt."
+    },
+    {
+        "Time": "11:30",
+        "Activity": "Email @influenza-1 to confirm the required data fields for seasonal influenza trend analysis and ensure the EHR system can export them."
+    },
+    {
+        "Time": "13:00",
+        "Activity": "Lunch break (12:00-14:00) \u2013 watch a tech review video on cloud-based EHR solutions."
+    },
+    {
+        "Time": "14:00",
+        "Activity": "Set up automated data export scripts to pull daily influenza-related data from the EHR system to a secure staging area."
+    },
+    {
+        "Time": "16:00",
+        "Activity": "Test the export scripts with a simulated dataset and verify that the data is correctly formatted and securely transferred."
+    },
+    {
+        "Time": "17:30",
+        "Activity": "Document and verify the simulated SFTP design and export-script plan in the local IT knowledge-base artifact."
+    }
+]
