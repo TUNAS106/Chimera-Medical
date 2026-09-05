@@ -455,12 +455,14 @@ CONTAINER_ID=$(docker inspect -f '{{.Id}}' chimera2 | cut -c1-12)
 sudo env SYSDIG_PLUGIN_DIR=/usr/share/sysdig/plugins \
   /home/tunas/.local/bin/sysdig-chimera --modern-bpf \
   -w /data/Logs/<filename>.scap \
-  container.id=$CONTAINER_ID
+  "container.id=$CONTAINER_ID and evt.type!=sched_yield"
 ```
 
 The kernel-7 compatibility build records all enabled Sysdig events except
 `sendmmsg` and `recvmmsg`, whose exit programs still exceed this kernel's eBPF
-verifier complexity limit. Their network traffic remains present in the PCAP.
+verifier complexity limit. The capture runners also exclude the high-volume
+`sched_yield` scheduler event. These exclusions do not remove network traffic
+from the PCAP.
 
 Post-processing extracts structured features (logon events, file operations, HTTP traffic, emails) from raw logs to match with CERT dataset format.
 

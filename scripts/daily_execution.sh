@@ -199,6 +199,9 @@ CONTAINER_FULL_ID="$(docker inspect -f '{{.Id}}' "$CONTAINER_NAME")"
 # The container plugin exposes container.id as the reliable 12-character ID.
 # container.full_id depends on asynchronous runtime enrichment.
 CONTAINER_ID="${CONTAINER_FULL_ID:0:12}"
+# sched_yield dominates the trace but does not describe application behavior.
+# Exclude it at capture time so it is never written to new SCAP files.
+SCAP_FILTER="container.id=$CONTAINER_ID and evt.type!=sched_yield"
 
 SCAP_SESSION="chimera-scap-$$"
 PCAP_SESSION="chimera-pcap-$$"
@@ -372,7 +375,7 @@ for week in "${weeks[@]}"; do
             "$SYSDIG_PLUGIN_DIR" \
             "$SYSDIG_BIN" \
             "$SCAP_FILE" \
-            "container.id=$CONTAINER_ID" \
+            "$SCAP_FILTER" \
             "$SYSDIG_RUNTIME_LOG"
         tmux send-keys -t "$SCAP_SESSION" "$scap_record_cmd" Enter
 

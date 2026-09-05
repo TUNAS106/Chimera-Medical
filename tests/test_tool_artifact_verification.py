@@ -1,7 +1,10 @@
 import os
 import unittest
 
-from owl.utils.enhanced_role_playing import _paths_refer_to_same_file
+from owl.utils.enhanced_role_playing import (
+    _artifact_tool_call_succeeded,
+    _paths_refer_to_same_file,
+)
 
 
 class ToolArtifactVerificationTests(unittest.TestCase):
@@ -24,6 +27,35 @@ class ToolArtifactVerificationTests(unittest.TestCase):
             _paths_refer_to_same_file(
                 "/data/Chimera/workspace-a/report.md",
                 "/data/Chimera/workspace-b/report.md",
+            )
+        )
+
+    def test_file_read_content_may_contain_failure_language(self):
+        content = 'print("Failed to read the input CSV file.")'
+
+        self.assertTrue(
+            _artifact_tool_call_succeeded("file_read", content)
+        )
+
+    def test_file_read_tool_error_is_rejected(self):
+        self.assertFalse(
+            _artifact_tool_call_succeeded(
+                "file_read",
+                "File not found or not a regular file: /tmp/missing.json",
+            )
+        )
+
+    def test_write_requires_explicit_success_envelope(self):
+        self.assertTrue(
+            _artifact_tool_call_succeeded(
+                "write_file",
+                "Content successfully written to file: /tmp/report.md",
+            )
+        )
+        self.assertFalse(
+            _artifact_tool_call_succeeded(
+                "write_file",
+                "Error occurred while writing to file /tmp/report.md: full",
             )
         )
 

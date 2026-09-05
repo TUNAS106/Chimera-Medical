@@ -51,7 +51,7 @@ Tên này phải trùng với `--served-model-name` trong notebook Kaggle.
 | `camel/camel/toolkits/browser_toolkit.py` | Khởi tạo Chromium lazy, tái sử dụng đúng một browser, kiểm tra phần tử editable trước khi fill, giới hạn browser round, dừng khi CAPTCHA/action lỗi lặp và cleanup page/context/browser/Playwright idempotent. |
 | `camel/camel/toolkits/file_write_toolkit.py` | Chặn path thoát khỏi task workspace và thêm alias `write_file` tương thích ổn định với Hermes tool parser. |
 | `camel/camel/toolkits/terminal_toolkit.py` | Giới hạn file search/read trong task workspace, regex/glob/output/timeout; thêm `file_read` có giới hạn kích thước và `close()` idempotent. |
-| `owl/owl/utils/enhanced_role_playing.py` | Ghi tool calls và chỉ chấp nhận tín hiệu hoàn tất sau cặp write/read thành công trên cùng artifact; nhận diện cả đường dẫn tương đối/tuyệt đối và trường hợp marker hoàn tất xuất hiện ở round cuối. |
+| `owl/owl/utils/enhanced_role_playing.py` | Ghi tool calls và chỉ chấp nhận tín hiệu hoàn tất sau cặp write/read thành công trên cùng artifact; nhận diện cả đường dẫn tương đối/tuyệt đối và trường hợp marker hoàn tất xuất hiện ở round cuối. Kết quả file tool được kiểm tra theo status envelope riêng: nội dung file có cụm như `failed to` không còn bị nhận nhầm là lỗi `file_read`. |
 | `camel/pyproject.toml` | Đặt `tool.uv.default-groups = []` vì `dev`/`docs` là optional extras chứ không phải `dependency-groups`; sửa lỗi `uv sync` dừng trước cả khi xử lý `--no-default-groups`. |
 | `src/member_email.py` | Gắn nhãn riêng cho chọn người nhận, sinh email và trả lời email. |
 | `src/daily_plan_update.py` | Gắn nhãn riêng cho cập nhật lịch thường và lịch tấn công. |
@@ -60,8 +60,8 @@ Tên này phải trùng với `--served-model-name` trong notebook Kaggle.
 | `src/daily_execution_auto.py` | Dùng supervisor chung, chờ kết quả activity và evidence trước hand-off email; serialize replan vào main loop, giới hạn reply/replan/cutoff, chỉ tạo daily summary sau khi worker drain; ghi lifecycle/model/endpoint và làm logger close/flush idempotent. |
 | `src/daily_execution_auto_attack.py` | Áp dụng cùng supervisor, evidence, email/replan, cutoff và summary lifecycle cho attack run; metadata có thêm attacker và attack ID. |
 | `.env.example` | Thêm các biến cấu hình Qwen/vLLM, web mode, concurrency, timeout, browser/tool limits và mức độ audit. |
-| `scripts/daily_execution.sh` | Điều khiển `chimera2`, model/web preflight trước capture; chỉ preflight Chromium ở mode `browser`; chạy đúng entrypoint và thu sysdig/tcpdump. |
-| `scripts/attack_auto.sh` | Mặc định điều khiển `chimera2`, gọi `attack_schedule.py` rồi entrypoint tấn công dưới `src/`, và bắt buộc chọn ID attacker đã sinh qua biến môi trường. |
+| `scripts/daily_execution.sh` | Điều khiển `chimera2`, model/web preflight trước capture; chỉ preflight Chromium ở mode `browser`; chạy đúng entrypoint và thu sysdig/tcpdump; loại `sched_yield` khỏi SCAP ngay lúc capture. |
+| `scripts/attack_auto.sh` | Mặc định điều khiển `chimera2`, gọi `attack_schedule.py` rồi entrypoint tấn công dưới `src/`, bắt buộc chọn ID attacker đã sinh qua biến môi trường và cũng loại `sched_yield` khỏi SCAP. |
 | `scripts/full_execution.sh` | Chạy tuần tự toàn bộ bước dựng công ty, sinh lịch và normal simulation trong `chimera2`; preflight dependency, đúng 5 nhân viên, API/model availability trước khi tạo dữ liệu. |
 | `scripts/prepare_company.sh`, `scripts/prepare_company_in_container.sh`, `src/company_preparation_status.py` | Workflow chuẩn bị resumable cho cả host/container: validate và skip từng phase đã hoàn tất, tạo đủ công ty 5 người, profile, meeting, weekly/daily schedules; meeting phải có đúng mọi cặp nhân viên-tuần, output downstream phải mới hơn input; không chạy hành vi hoặc bắt SCAP/PCAP. |
 | `README.md`, quy trình cài `owl/` và `camel/` | Dùng lock gốc của OWL làm nguồn dependency runtime rồi cài Camel patched bằng `--no-deps`; tránh `camel[all]` kéo `transformers==4.12.2`/`tokenizers==0.10.3` và gây lỗi build Rust hoặc hạ dependency. Dependency/`uv.lock` của OWL không bị sửa; OWL chỉ có patch completion/artifact trong `enhanced_role_playing.py`. |
@@ -183,7 +183,9 @@ runtime/tham chiếu, không được tính là thay đổi source.
   reject; runner nạp container plugin, chờ SCAP/PCAP sẵn sàng và đọc lại file
   sau mỗi ngày. Hai syscall
   `sendmmsg`/`recvmmsg` bị loại khỏi SCAP do giới hạn verifier, nhưng traffic
-  tương ứng vẫn có trong PCAP.
+  tương ứng vẫn có trong PCAP. Bộ lọc capture còn chủ động bỏ `sched_yield` vì
+  đây là scheduler noise chiếm phần lớn Monday SCAP; thay đổi chỉ áp dụng cho
+  file được capture từ lần chạy tiếp theo và không sửa SCAP hiện có.
 - [x] `attack_auto.sh` bỏ attacker hard-code, bắt buộc truyền attacker ID qua
   môi trường (người chạy chọn một ID trong profile đã sinh), gọi bước chèn
   attack schedule trước khi chạy và thu SCAP/PCAP theo từng attack.
@@ -411,7 +413,10 @@ quyền đọc thư mục scenario và thiết lập rotation/retention cho lầ
   hand-off bắt buộc chính xác file event này; một backup hay artifact phụ không
   còn đủ để task được ghi `success`. Trạng thái `incomplete` được sửa thử đúng
   một lần (`CHIMERA_ACTIVITY_SEMANTIC_RETRIES=1`); timeout, CAPTCHA, lỗi kết nối
-  và lỗi tool thật không bị retry mù quáng.
+  và lỗi tool thật không bị retry mù quáng. Validator chỉ coi `file_read` lỗi
+  khi kết quả bắt đầu bằng status lỗi do toolkit phát ra; không quét các cụm
+  lỗi chung trong chính nội dung artifact vì mã nguồn/báo cáo hợp lệ có thể
+  chứa các câu như `Failed to read ...`.
 - Bước đọc lại SCAP/PCAP có hard timeout và stdin tách khỏi terminal, nên capture
   reader bị treo hoặc suspend không thể giữ host runner vô hạn. Logger daily và
   attack có thể bị flush lại an toàn sau `close()`, tránh Python đổi một run đã

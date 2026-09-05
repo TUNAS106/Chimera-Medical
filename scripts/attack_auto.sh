@@ -128,6 +128,9 @@ echo "Activity supervisor: max_concurrent=$MAX_CONCURRENT_TASKS."
 CONTAINER_PID="$(docker inspect -f '{{.State.Pid}}' "$CONTAINER_NAME")"
 CONTAINER_FULL_ID="$(docker inspect -f '{{.Id}}' "$CONTAINER_NAME")"
 CONTAINER_ID="${CONTAINER_FULL_ID:0:12}"
+# sched_yield dominates the trace but does not describe application behavior.
+# Exclude it at capture time so it is never written to new SCAP files.
+SCAP_FILTER="container.id=$CONTAINER_ID and evt.type!=sched_yield"
 
 SCAP_SESSION="chimera-attack-scap-$$"
 PCAP_SESSION="chimera-attack-pcap-$$"
@@ -277,7 +280,7 @@ for attack_id in "${attacks[@]}"; do
         "$SYSDIG_PLUGIN_DIR" \
         "$SYSDIG_BIN" \
         "$SCAP_FILE" \
-        "container.id=$CONTAINER_ID" \
+        "$SCAP_FILTER" \
         "$SYSDIG_RUNTIME_LOG"
     tmux send-keys -t "$SCAP_SESSION" "$scap_record_cmd" Enter
 
