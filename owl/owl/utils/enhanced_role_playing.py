@@ -477,6 +477,16 @@ def _artifact_tool_call_succeeded(tool_name: str, result: object) -> bool:
     return False
 
 
+def _artifact_path_is_required(
+    artifact_path: str, required_artifact: Optional[str]
+) -> bool:
+    """Return whether a tool path identifies the required event artifact."""
+
+    if not required_artifact:
+        return True
+    return _paths_refer_to_same_file(artifact_path, required_artifact)
+
+
 def run_chimera_society(
     society: OwlRolePlaying,
     round_limit: int = 15,
@@ -485,6 +495,7 @@ def run_chimera_society(
     event_index: int = 0,
     week: int = 0,
     date: str = "Monday",
+    required_artifact: Optional[str] = None,
 ) -> Tuple[str, List[dict], dict]:
     
     os.makedirs(log_dir, exist_ok=True)
@@ -505,12 +516,17 @@ def run_chimera_society(
     written_artifact_paths = set()
 
     chat_history = []
-    init_prompt = """
+    required_artifact_text = required_artifact or "the required event artifact"
+    init_prompt = f"""
     Give the executor one concrete end-to-end instruction now. It must inspect
-    the relevant local input, create a named artifact for the overall task with
-    `file_read`, save it with `write_file`, and verify that saved artifact with
-    `file_read`. Do not search for a filename whose path is already supplied.
-    Only reply using the required Instruction and Input format.
+    the relevant local input, create the exact required event artifact
+    `{required_artifact_text}` with `write_file`, and verify that exact artifact
+    with `file_read` after the final write. If the activity naturally calls for
+    a Python, CSV, JSON, or other supporting file, place the useful deliverable
+    in `{required_artifact_text}` or describe/link any auxiliary file from it;
+    an auxiliary file alone does not satisfy completion. Do not search for a
+    filename whose path is already supplied. Only reply using the required
+    Instruction and Input format.
         """
     input_msg = society.init_chat(init_prompt)
     for _round in range(round_limit):
@@ -548,6 +564,9 @@ def run_chimera_society(
                 tool_name in {"write_file", "write_to_file"}
                 and normalized_path
                 and tool_succeeded
+                and _artifact_path_is_required(
+                    normalized_path, required_artifact
+                )
             ):
                 written_artifact_paths.add(normalized_path)
             elif (
@@ -597,15 +616,18 @@ def run_chimera_society(
                 termination_reason = "task_done"
                 break
             logger.warning(
-                "Ignoring premature TASK_DONE: no artifact write/read pair"
+                "Ignoring premature TASK_DONE: required artifact %s has no "
+                "successful write/read pair",
+                required_artifact_text,
             )
             assistant_completion_signal = False
             assistant_response.msg.content += (
-                "\n\nCHIMERA_VALIDATION_REQUIRED: No successful artifact "
-                "write followed by file_read has occurred. The task is not "
-                "done. Instruct the executor to create the required event "
-                "artifact with write_file and then verify that exact path "
-                "with file_read."
+                "\n\nCHIMERA_VALIDATION_REQUIRED: The exact required event "
+                f"artifact `{required_artifact_text}` has not had a successful "
+                "write followed by file_read. The task is not done. Instruct "
+                "the executor to create that exact path with write_file and "
+                "then verify the same path with file_read. Auxiliary files do "
+                "not satisfy completion."
             )
         if assistant_response.terminated or user_response.terminated:
             termination_reason = "agent_terminated_without_task_done"
@@ -631,6 +653,7 @@ def run_chimera_society(
         "assistant_completion_signal": assistant_completion_signal,
         "artifact_tool_verified": artifact_tool_verified,
         "termination_reason": termination_reason,
+        "required_artifact": required_artifact,
     }
     
     # Remove the file handler after logging is complete

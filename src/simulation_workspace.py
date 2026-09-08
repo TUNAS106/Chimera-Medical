@@ -85,6 +85,89 @@ _BACKUP_LOG = """2026-08-30T02:00:01Z backup_start target=ehr-sim-db
 2026-08-30T02:04:02Z retention_check status=success policy_days=30
 """
 
+_SECURITY_AUDIT_LOGS = [
+    {
+        "timestamp": "2026-08-31T08:01:12Z",
+        "environment": "simulation",
+        "user_id": "ehr-1",
+        "action": "login",
+        "outcome": "success",
+        "source_ip": "10.20.30.11",
+        "mfa": True,
+        "reason": "authorized_role",
+    },
+    {
+        "timestamp": "2026-08-31T08:03:45Z",
+        "environment": "simulation",
+        "user_id": "data-1",
+        "action": "login",
+        "outcome": "success",
+        "source_ip": "10.20.30.12",
+        "mfa": True,
+        "reason": "authorized_role",
+    },
+    {
+        "timestamp": "2026-08-31T10:14:03Z",
+        "environment": "simulation",
+        "user_id": "unknown-user",
+        "action": "login",
+        "outcome": "failure",
+        "source_ip": "198.51.100.24",
+        "mfa": False,
+        "reason": "unknown_account",
+    },
+    {
+        "timestamp": "2026-08-31T10:14:19Z",
+        "environment": "simulation",
+        "user_id": "unknown-user",
+        "action": "login",
+        "outcome": "failure",
+        "source_ip": "198.51.100.24",
+        "mfa": False,
+        "reason": "unknown_account",
+    },
+    {
+        "timestamp": "2026-08-31T10:14:37Z",
+        "environment": "simulation",
+        "user_id": "unknown-user",
+        "action": "login",
+        "outcome": "failure",
+        "source_ip": "198.51.100.24",
+        "mfa": False,
+        "reason": "rate_limit_triggered",
+    },
+    {
+        "timestamp": "2026-08-31T10:15:02Z",
+        "environment": "simulation",
+        "user_id": "unknown-user",
+        "action": "login",
+        "outcome": "blocked",
+        "source_ip": "198.51.100.24",
+        "mfa": False,
+        "reason": "temporary_source_lockout",
+    },
+    {
+        "timestamp": "2026-08-31T13:22:51Z",
+        "environment": "simulation",
+        "user_id": "clerk-1",
+        "action": "record_export",
+        "outcome": "denied",
+        "source_ip": "10.20.30.14",
+        "mfa": True,
+        "reason": "role_not_permitted",
+    },
+    {
+        "timestamp": "2026-08-31T16:48:09Z",
+        "environment": "simulation",
+        "user_id": "it-1",
+        "action": "configuration_review",
+        "outcome": "success",
+        "source_ip": "10.20.30.15",
+        "mfa": True,
+        "reason": "authorized_role",
+    },
+]
+
 
 def _write_text_if_missing(path: str, content: str) -> None:
     """Create one seed file atomically without overwriting task output."""
@@ -126,6 +209,10 @@ def prepare_simulation_workspace(
         "hipaa_security_checklist.md": _HIPAA_CHECKLIST,
         "access_matrix.csv": _ACCESS_MATRIX,
         "backup_log_previous_night.txt": _BACKUP_LOG,
+        "security_audit_logs.json": json.dumps(
+            _SECURITY_AUDIT_LOGS, indent=2, ensure_ascii=False
+        )
+        + "\n",
         "ehr_configuration.json": json.dumps(
             {
                 "environment": "simulation",
@@ -180,10 +267,11 @@ All authorized simulated resources are already inside this task workspace:
 Start by listing or reading the relevant local seed files. Stay inside this
 workspace for every file and terminal operation. Treat `simulated_inbox.md`,
 `ehr_configuration.json`, `system_health.json`, access/backup documents, and
-`ehr_patient_sample_jan_mar.csv` as the corresponding simulated systems. The
-patient sample is explicitly synthetic and intentionally contains a few quality
-issues. Public `search_web`/`fetch_url` may be used only when current public
-guidance is genuinely useful.
+`security_audit_logs.json` and `ehr_patient_sample_jan_mar.csv` as the
+corresponding simulated systems. The audit and patient records are explicitly
+synthetic; the patient sample intentionally contains a few quality issues.
+Public `search_web`/`fetch_url` may be used only when current public guidance is
+genuinely useful.
 
 Complete the activity by producing a concise, role-appropriate artifact in the
 workspace (for example Markdown, CSV, JSON, or a small tested Python script).

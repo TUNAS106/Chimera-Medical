@@ -436,6 +436,7 @@ def run_task(
             event_index=event_index,
             week=week,
             date=date,
+            required_artifact=required_artifact,
         )
         task_status = _task_completion_status(
             answer,

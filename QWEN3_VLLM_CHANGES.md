@@ -33,7 +33,7 @@ Tên này phải trùng với `--served-model-name` trong notebook Kaggle.
 | `src/web_search.py`, `src/web_search_preflight.py` | Search/fetch text có giới hạn dung lượng, redirect, timeout và URL public; phát hiện CAPTCHA, không retry/bypass; fail-fast trước capture. |
 | `src/model_preflight.py` | Kiểm tra `/models` và một chat completion nhỏ trước khi bắt SCAP/PCAP; log chỉ endpoint đã che signed path. |
 | `src/task_supervisor.py` | Xếp hàng activity, mặc định tối đa ba process đồng thời ở `search_only`, timeout cứng và kết thúc cả process group để không rò Playwright/Chromium; chờ kết quả theo task, ghi nhận lỗi/cancel và chỉ retry hữu hạn trạng thái semantic `incomplete`. |
-| `src/simulation_workspace.py`, `src/workday_policy.py` | Tạo workspace cô lập với dữ liệu EHR tổng hợp đã khử định danh và hợp đồng artifact bắt buộc; chuẩn hóa cutoff ngày làm việc, mention `@member-id`, phân loại email-only, reply depth và lọc replan nằm trong giờ làm việc. |
+| `src/simulation_workspace.py`, `src/workday_policy.py` | Tạo workspace cô lập với dữ liệu EHR tổng hợp đã khử định danh, seed security audit ổn định và hợp đồng artifact bắt buộc; chuẩn hóa cutoff ngày làm việc, mention `@member-id`, phân loại email-only, reply depth và lọc replan nằm trong giờ làm việc. |
 | `src/daily_run_preflight.py` | Kiểm tra lịch đúng tuần/ngày trước khi mở capture: đủ profile/lịch, `Time`/`Activity` hợp lệ, task nằm trong 08:00–18:00, mention hợp lệ, không meeting và mỗi nhân viên có ít nhất một activity sinh artifact. |
 | `src/sanitize_model_audit.py` | Ghi lại atomically trường `endpoint` trong model audit dưới dạng đã che path/token; giữ nguyên record hỏng JSON và mọi trường audit khác. |
 | `src/random_browse.py` | Dùng chung cấu hình task/web-mode và lifecycle cleanup; không còn DuckDuckGo/Google tool riêng hoặc rò browser. |
@@ -51,7 +51,7 @@ Tên này phải trùng với `--served-model-name` trong notebook Kaggle.
 | `camel/camel/toolkits/browser_toolkit.py` | Khởi tạo Chromium lazy, tái sử dụng đúng một browser, kiểm tra phần tử editable trước khi fill, giới hạn browser round, dừng khi CAPTCHA/action lỗi lặp và cleanup page/context/browser/Playwright idempotent. |
 | `camel/camel/toolkits/file_write_toolkit.py` | Chặn path thoát khỏi task workspace và thêm alias `write_file` tương thích ổn định với Hermes tool parser. |
 | `camel/camel/toolkits/terminal_toolkit.py` | Giới hạn file search/read trong task workspace, regex/glob/output/timeout; thêm `file_read` có giới hạn kích thước và `close()` idempotent. |
-| `owl/owl/utils/enhanced_role_playing.py` | Ghi tool calls và chỉ chấp nhận tín hiệu hoàn tất sau cặp write/read thành công trên cùng artifact; nhận diện cả đường dẫn tương đối/tuyệt đối và trường hợp marker hoàn tất xuất hiện ở round cuối. Kết quả file tool được kiểm tra theo status envelope riêng: nội dung file có cụm như `failed to` không còn bị nhận nhầm là lỗi `file_read`. |
+| `owl/owl/utils/enhanced_role_playing.py` | Ghi tool calls và chỉ chấp nhận tín hiệu hoàn tất sau cặp write/read thành công trên đúng required artifact; file phụ không thể kích hoạt `TASK_DONE`; nhận diện cả đường dẫn tương đối/tuyệt đối và marker ở round cuối. Kết quả file tool được kiểm tra theo status envelope riêng: nội dung file có cụm như `failed to` không còn bị nhận nhầm là lỗi `file_read`. |
 | `camel/pyproject.toml` | Đặt `tool.uv.default-groups = []` vì `dev`/`docs` là optional extras chứ không phải `dependency-groups`; sửa lỗi `uv sync` dừng trước cả khi xử lý `--no-default-groups`. |
 | `src/member_email.py` | Gắn nhãn riêng cho chọn người nhận, sinh email và trả lời email. |
 | `src/daily_plan_update.py` | Gắn nhãn riêng cho cập nhật lịch thường và lịch tấn công. |
@@ -416,7 +416,10 @@ quyền đọc thư mục scenario và thiết lập rotation/retention cho lầ
   và lỗi tool thật không bị retry mù quáng. Validator chỉ coi `file_read` lỗi
   khi kết quả bắt đầu bằng status lỗi do toolkit phát ra; không quét các cụm
   lỗi chung trong chính nội dung artifact vì mã nguồn/báo cáo hợp lệ có thể
-  chứa các câu như `Failed to read ...`.
+  chứa các câu như `Failed to read ...`. Tên required artifact được truyền trực
+  tiếp vào vòng OWL và instruction đầu tiên; write/read một file phụ như `.py`
+  không còn kết thúc hội thoại, mà reviewer sẽ yêu cầu tạo và đọc lại đúng file
+  event `.md` trước khi chấp nhận `TASK_DONE`.
 - Bước đọc lại SCAP/PCAP có hard timeout và stdin tách khỏi terminal, nên capture
   reader bị treo hoặc suspend không thể giữ host runner vô hạn. Logger daily và
   attack có thể bị flush lại an toàn sau `close()`, tránh Python đổi một run đã
